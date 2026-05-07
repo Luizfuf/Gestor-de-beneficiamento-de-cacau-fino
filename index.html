@@ -734,7 +734,7 @@
 // ═══════════════════════════════════════════════════════════
 //  CONFIGURAÇÃO
 // ═══════════════════════════════════════════════════════════
-const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbywDrt-6awJh2Sjsg8C_u-fcCdNE49LSmKqui_sLeZrwCm-KBlvO3pLjRZVRnyUJ9Qs/exec';
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxja7SD8Oj9tZl8p3coUYRbemysKLoUgHp35bvmslNvdiQ-_7dfZgKorCkm8qrz8Vc9/exec';
 
 // ═══════════════════════════════════════════════════════════
 //  ESTADO LOCAL
@@ -789,47 +789,76 @@ function showTab(name) {
 // ═══════════════════════════════════════════════════════════
 async function apiCall(action, data = {}) {
   const payload = { action, ...data };
-  const resp = await fetch(BACKEND_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-  // no-cors retorna opaque, então salvamos localmente e tentamos GET para leitura
-  return true;
+  
+  // Google Apps Script POST com JSON precisa de redirecionamento e tratamento de CORS.
+  // A melhor forma de garantir que os dados cheguem é usar o formato de formulário ou 
+  // garantir que o backend aceite o payload.
+  
+  try {
+    // Usamos um timeout para não travar a interface
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    const resp = await fetch(BACKEND_URL, {
+      method: 'POST',
+      mode: 'no-cors', // Necessário para evitar erros de CORS no Google Script
+      headers: { 'Content-Type': 'text/plain' }, // Evita pre-flight OPTIONS
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    // Como mode é 'no-cors', a resposta é opaca. Não conseguimos ler o JSON de retorno,
+    // mas o dado chega ao servidor. Para ler dados, usamos sempre o apiGet.
+    return true;
+  } catch (e) {
+    console.error('Erro na chamada API:', e);
+    showToast('Erro de conexão com o servidor', 'error');
+    return false;
+  }
 }
 
 async function apiGet(params = {}) {
-  const qs = new URLSearchParams({ ...params }).toString();
+  const qs = new URLSearchParams({ ...params, _t: Date.now() }).toString();
   try {
     const resp = await fetch(`${BACKEND_URL}?${qs}`);
+    if (!resp.ok) throw new Error('Network response was not ok');
     const text = await resp.text();
-    try { return JSON.parse(text); } catch { return null; }
-  } catch { return null; }
+    try { 
+      const data = JSON.parse(text);
+      if (data.error) {
+        console.error('Erro do servidor:', data.error);
+        return null;
+      }
+      return data;
+    } catch (e) { 
+      console.error('Erro ao processar JSON:', text);
+      return null; 
+    }
+  } catch (e) {
+    console.error('Erro no GET:', e);
+    return null;
+  }
 }
 
 async function loadAllLotes() {
   setStatus('Sincronizando...', false);
-  try {
-    const data = await apiGet({ action: 'getLotes' });
-    if (data && Array.isArray(data.lotes)) {
-      // Mesclar dados do servidor com local (servidor tem prioridade)
-      const serverMap = {};
-      data.lotes.forEach(l => { serverMap[l.numero] = l; });
-      // Atualizar locais com dados do servidor
-      lotes = lotes.map(l => serverMap[l.numero] ? { ...l, ...serverMap[l.numero] } : l);
-      // Adicionar novos do servidor que não existem localmente
-      data.lotes.forEach(l => {
-        if (!lotes.find(x => x.numero === l.numero)) lotes.push(l);
-      });
-      saveLocal();
-      setStatus('Sincronizado', true);
-      document.getElementById('last-sync').textContent = 'Última sync: ' + new Date().toLocaleTimeString('pt-BR');
+  const data = await apiGet({ action: 'getLotes' });
+  
+  if (data && Array.isArray(data.lotes)) {
+    // O servidor respondeu com sucesso. Vamos atualizar os dados locais.
+    // Prioridade total para o servidor para garantir multi-dispositivo.
+    lotes = data.lotes;
+    saveLocal();
+    setStatus('Conectado (Nuvem)', true);
+    document.getElementById('last-sync').textContent = 'Sincronizado: ' + new Date().toLocaleTimeString('pt-BR');
+  } else {
+    // Falha na conexão ou servidor vazio
+    if (lotes.length > 0) {
+      setStatus('Offline (Dados Locais)', false);
     } else {
-      setStatus('Usando dados locais', true);
+      setStatus('Sem conexão / Sem dados', false);
     }
-  } catch (e) {
-    setStatus('Offline - dados locais', false);
   }
   renderLotes();
 }
