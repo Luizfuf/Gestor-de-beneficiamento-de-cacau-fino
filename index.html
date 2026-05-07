@@ -734,7 +734,7 @@
 // ═══════════════════════════════════════════════════════════
 //  CONFIGURAÇÃO
 // ═══════════════════════════════════════════════════════════
-const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbywDrt-6awJh2Sjsg8C_u-fcCdNE49LSmKqui_sLeZrwCm-KBlvO3pLjRZVRnyUJ9Qs/exec';
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxja7SD8Oj9tZl8p3coUYRbemysKLoUgHp35bvmslNvdiQ-_7dfZgKorCkm8qrz8Vc9/exec';
 
 // ═══════════════════════════════════════════════════════════
 //  ESTADO LOCAL
@@ -821,15 +821,20 @@ async function apiCall(action, data = {}) {
 async function apiGet(params = {}) {
   const qs = new URLSearchParams({ ...params, _t: Date.now() }).toString();
   try {
-    const resp = await fetch(`${BACKEND_URL}?${qs}`);
-    if (!resp.ok) throw new Error('Network response was not ok');
+    // Google Apps Script requer seguir redirecionamentos para GET
+    const resp = await fetch(`${BACKEND_URL}?${qs}`, {
+      method: 'GET',
+      redirect: 'follow'
+    });
+    
     const text = await resp.text();
     try { 
-      const data = JSON.parse(text);
-      if (data.error) {
-        console.error('Erro do servidor:', data.error);
+      // O Google às vezes retorna um HTML de erro ou redirecionamento se a URL estiver errada
+      if (text.trim().startsWith('<!DOCTYPE')) {
+        console.error('Recebido HTML em vez de JSON. Verifique a URL do Script.');
         return null;
       }
+      const data = JSON.parse(text);
       return data;
     } catch (e) { 
       console.error('Erro ao processar JSON:', text);
@@ -1817,17 +1822,25 @@ function checkUrlLote() {
   const params = new URLSearchParams(window.location.search);
   const loteNum = params.get('lote');
   if (loteNum) {
-    setTimeout(() => {
-      const lote = lotes.find(l => l.numero === loteNum);
-      if (lote) {
-        const id = sanitizeId(loteNum);
-        const el = document.getElementById(`lote-${id}`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth' });
-          document.getElementById(`body-${id}`).classList.add('open');
-        }
+    console.log('Detectado lote via URL:', loteNum);
+    // Forçar aba de lotes
+    showTab('lotes');
+    
+    // Aguardar renderização
+    const checkExist = setInterval(() => {
+      const id = sanitizeId(loteNum);
+      const el = document.getElementById(`lote-${id}`);
+      if (el) {
+        clearInterval(checkExist);
+        el.scrollIntoView({ behavior: 'smooth' });
+        const body = document.getElementById(`body-${id}`);
+        if (body) body.classList.add('open');
+        showToast('Lote ' + loteNum + ' aberto via QR Code', 'success');
       }
-    }, 1000);
+    }, 500);
+    
+    // Timeout após 10 segundos
+    setTimeout(() => clearInterval(checkExist), 10000);
   }
 }
 
