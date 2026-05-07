@@ -1,180 +1,1810 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Cacaueiro — Controle de Beneficiamento</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<style>
-  :root {
-    --cacao: #3B1F0A; --terra: #6B3A1F; --ouro: #C28B3A; --mel: #E8B86D;
-    --areia: #F5ECD7; --creme: #FBF6EC; --verde: #2D5016; --verde-claro: #4A7C2A;
-    --erro: #C0392B; --sucesso: #27AE60; --cinza: #8B7355; --sombra: rgba(59,31,10,0.15);
-    --r: 12px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(--cacao); min-height: 100vh; padding-bottom: 80px; }
-  header { background: var(--cacao); color: var(--areia); padding: 18px 20px 14px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px var(--sombra); }
-  header h1 { font-family: 'Playfair Display', serif; font-size: 1.5rem; }
-  .nav-tabs { display: flex; overflow-x: auto; gap: 6px; padding: 14px 16px 0; background: var(--cacao); }
-  .tab-btn { flex-shrink: 0; padding: 8px 16px; border: none; border-radius: 20px 20px 0 0; background: rgba(255,255,255,0.1); color: var(--mel); font-size: 0.8rem; cursor: pointer; }
-  .tab-btn.active { background: var(--creme); color: var(--cacao); font-weight: 600; }
-  main { padding: 20px 16px; max-width: 600px; margin: 0 auto; }
-  .screen { display: none; animation: fadeIn 0.25s ease; }
-  .screen.active { display: block; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-  .form-section { background: white; border-radius: var(--r); overflow: hidden; margin-bottom: 14px; box-shadow: 0 2px 8px var(--sombra); }
-  .section-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--cacao); color: var(--areia); cursor: pointer; }
-  .section-body { display: none; padding: 18px 16px; }
-  .section-body.open { display: block; }
-  .field { margin-bottom: 16px; }
-  .field label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--terra); margin-bottom: 6px; text-transform: uppercase; }
-  .field input, .field select { width: 100%; padding: 12px 14px; border: 1.5px solid var(--areia); border-radius: 8px; font-size: 1rem; background: var(--creme); }
-  .btn { display: block; width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; text-align: center; }
-  .btn-primary { background: var(--cacao); color: var(--areia); }
-  .btn-gold { background: var(--ouro); color: white; }
-  .img-upload-zone { border: 2px dashed var(--mel); border-radius: var(--r); padding: 24px; text-align: center; background: var(--areia); cursor: pointer; }
-  .img-preview img { width: 100%; border-radius: 8px; margin-top: 10px; }
-  #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--cacao); color: var(--areia); padding: 12px 22px; border-radius: 30px; display: none; z-index: 300; }
-  .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; display: inline-block; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Beneficiamento de Cacau</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --primary: #5C3317;
+      --primary-light: #7B4A2A;
+      --accent: #C8860A;
+      --accent-light: #E8A020;
+      --bg: #FDF6EC;
+      --bg2: #F5EBD8;
+      --card: #FFFFFF;
+      --text: #2C1A0E;
+      --text-muted: #7A5C3A;
+      --border: #D4B896;
+      --success: #2E7D32;
+      --danger: #C62828;
+      --danger-light: #FFEBEE;
+      --info: #0277BD;
+      --shadow: 0 2px 12px rgba(92,51,23,0.10);
+      --radius: 14px;
+      --radius-sm: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: #fff;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    header .logo { font-size: 28px; }
+    header h1 { font-size: 18px; font-weight: 700; line-height: 1.2; }
+    header p { font-size: 12px; opacity: 0.8; }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      background: var(--primary);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex: 0 0 auto;
+      padding: 12px 18px;
+      color: rgba(255,255,255,0.7);
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      background: none;
+      cursor: pointer;
+      white-space: nowrap;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      color: #fff;
+      border-bottom-color: var(--accent-light);
+    }
+    .tab-btn:hover { color: #fff; }
+
+    /* ── MAIN ── */
+    .tab-content { display: none; padding: 16px; max-width: 700px; margin: 0 auto; }
+    .tab-content.active { display: block; }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .card-header {
+      background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: #fff;
+      padding: 14px 18px;
+      font-weight: 700;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-body { padding: 16px; }
+
+    /* ── FORM ELEMENTS ── */
+    .form-group { margin-bottom: 14px; }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    input[type="time"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      background: var(--bg);
+      color: var(--text);
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: #fff;
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    .row { display: flex; gap: 10px; }
+    .row .form-group { flex: 1; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 13px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+      margin-top: 6px;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-light); }
+    .btn-accent { background: var(--accent); color: #fff; }
+    .btn-accent:hover { background: var(--accent-light); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--primary);
+      color: var(--primary);
+    }
+    .btn-sm { padding: 8px 14px; font-size: 13px; width: auto; margin-top: 0; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── LOTE CARDS ── */
+    .lote-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+      border-left: 5px solid var(--accent);
+      overflow: hidden;
+    }
+    .lote-card-header {
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      background: var(--bg2);
+    }
+    .lote-card-header:hover { background: #EDE0CC; }
+    .lote-info h3 { font-size: 16px; font-weight: 700; color: var(--primary); }
+    .lote-info p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .lote-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 20px;
+      background: var(--bg2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .badge.done { background: #E8F5E9; color: var(--success); border-color: #A5D6A7; }
+    .badge.active { background: #FFF8E1; color: #E65100; border-color: #FFE082; }
+    .lote-actions { display: flex; gap: 8px; align-items: center; }
+
+    .lote-body { display: none; padding: 0; }
+    .lote-body.open { display: block; }
+
+    /* ── ACCORDION ── */
+    .accordion-item {
+      border-bottom: 1px solid var(--border);
+    }
+    .accordion-item:last-child { border-bottom: none; }
+    .accordion-header {
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--primary);
+      background: #fff;
+      transition: background 0.2s;
+    }
+    .accordion-header:hover { background: var(--bg); }
+    .accordion-header .step-num {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    .accordion-header .step-num.done { background: var(--success); }
+    .accordion-header .step-title { flex: 1; }
+    .accordion-header .chevron { transition: transform 0.2s; font-size: 16px; }
+    .accordion-header.open .chevron { transform: rotate(180deg); }
+    .accordion-body { display: none; padding: 16px; background: var(--bg); }
+    .accordion-body.open { display: block; }
+
+    /* ── TEMPERATURA TABLE ── */
+    .temp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .temp-table th {
+      background: var(--primary);
+      color: #fff;
+      padding: 8px;
+      text-align: center;
+    }
+    .temp-table td { padding: 6px 4px; border-bottom: 1px solid var(--border); }
+    .temp-table input {
+      width: 100%;
+      padding: 6px;
+      text-align: center;
+      font-size: 13px;
+    }
+
+    /* ── ESCALA SENSORIAL ── */
+    .scale-group { margin-bottom: 14px; }
+    .scale-label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+    .scale-options { display: flex; gap: 6px; flex-wrap: wrap; }
+    .scale-options label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .scale-options input[type="radio"] { display: none; }
+    .scale-btn {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      transition: all 0.15s;
+      cursor: pointer;
+    }
+    .scale-options input[type="radio"]:checked + .scale-btn {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    /* ── CHECKLIST ── */
+    .checklist { display: flex; flex-wrap: wrap; gap: 8px; }
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg2);
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      padding: 7px 13px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .check-item input { display: none; }
+    .check-item.checked {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    /* ── FOTO PREVIEW ── */
+    .foto-area {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--bg);
+      transition: border-color 0.2s;
+    }
+    .foto-area:hover { border-color: var(--accent); }
+    .foto-area img { max-width: 100%; border-radius: var(--radius-sm); margin-top: 10px; }
+    .foto-area p { color: var(--text-muted); font-size: 13px; margin-top: 8px; }
+
+    /* ── ETIQUETA ── */
+    .etiqueta-preview {
+      border: 2px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      text-align: center;
+      background: #fff;
+      margin-top: 12px;
+    }
+    .etiqueta-preview h2 { font-size: 20px; color: var(--primary); }
+    .etiqueta-preview p { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+    #qrcode-container { display: flex; justify-content: center; margin: 12px 0; }
+
+    /* ── CHAT ── */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 160px);
+      max-height: 700px;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: var(--bg2);
+      border-radius: var(--radius-sm);
+      margin-bottom: 10px;
+    }
+    .msg {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: var(--primary);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .msg.ai {
+      align-self: flex-start;
+      background: #fff;
+      color: var(--text);
+      border-bottom-left-radius: 4px;
+      box-shadow: var(--shadow);
+    }
+    .msg.system {
+      align-self: center;
+      background: var(--bg);
+      color: var(--text-muted);
+      font-size: 12px;
+      border-radius: 20px;
+      padding: 5px 12px;
+    }
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .chat-input-row textarea {
+      flex: 1;
+      min-height: 44px;
+      max-height: 120px;
+      padding: 10px 12px;
+      font-size: 14px;
+      border-radius: 22px;
+      resize: none;
+    }
+    .chat-btn {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .chat-btn:hover { background: var(--primary-light); }
+    .chat-btn.recording { background: var(--danger); animation: pulse 1s infinite; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    /* ── API CONFIG ── */
+    .api-config {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+    .api-config summary { cursor: pointer; font-weight: 600; color: var(--primary); }
+
+    /* ── TOAST ── */
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+    .toast {
+      background: var(--primary);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      animation: slideUp 0.3s ease;
+    }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .modal h3 { font-size: 18px; margin-bottom: 12px; color: var(--primary); }
+    .modal p { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
+    .modal-btns { display: flex; gap: 10px; }
+    .modal-btns .btn { flex: 1; }
+
+    /* ── LOADING ── */
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── SENSORIAL ROUNDS ── */
+    .sensorial-round {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .sensorial-round-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .sensorial-round-header h4 { font-size: 14px; font-weight: 700; color: var(--primary); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state p { font-size: 15px; }
+
+    /* ── PRINT ── */
+    @media print {
+      .no-print { display: none !important; }
+      .etiqueta-preview { border: 2px solid #000; }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 480px) {
+      .row { flex-direction: column; }
+      .tab-btn { padding: 10px 14px; font-size: 12px; }
+    }
+
+    .status-bar {
+      display: flex;
+      gap: 6px;
+      padding: 8px 16px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-muted);
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+    .status-dot.offline { background: var(--danger); }
+  </style>
 </head>
 <body>
 
 <header>
-  <h1>☽ Cacaueiro</h1>
-  <p>Gestão de Beneficiamento</p>
+  <div class="logo">🍫</div>
+  <div>
+    <h1>Beneficiamento de Cacau</h1>
+    <p>Sistema de Controle de Pós-Colheita</p>
+  </div>
 </header>
 
-<div class="nav-tabs">
-  <button class="tab-btn active" onclick="showScreen('lotes')">🌱 Lotes</button>
-  <button class="tab-btn" onclick="showScreen('novo')">＋ Novo Lote</button>
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('lotes')">📋 Lotes</button>
+  <button class="tab-btn" onclick="showTab('novo-lote')">➕ Novo Lote</button>
+  <button class="tab-btn" onclick="showTab('etiqueta')">🏷️ Etiqueta</button>
+  <button class="tab-btn" onclick="showTab('chat')">🤖 Chat IA</button>
 </div>
 
-<main>
-  <div class="screen active" id="screen-lotes">
-    <div id="lotes-list"></div>
-  </div>
+<div class="status-bar">
+  <div class="status-dot" id="status-dot"></div>
+  <span id="status-text">Verificando conexão...</span>
+  <span style="margin-left:auto;" id="last-sync"></span>
+</div>
 
-  <div class="screen" id="screen-novo">
-    <div class="form-section">
-      <div class="section-header"><h3>Novo Registro</h3></div>
-      <div class="section-body open">
-        <div class="field"><label>Lote</label><input type="text" id="n-lote" placeholder="Ex: LOTE-001"></div>
-        <div class="field"><label>Referência</label><input type="text" id="n-ref" placeholder="Nome do produtor"></div>
-        <div class="field"><label>Data Quebra</label><input type="date" id="n-data-quebra"></div>
-        <button class="btn btn-primary" onclick="criarLote()">Criar e Sincronizar</button>
-      </div>
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  ABA: LOTES                                            -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="tab-content active" id="tab-lotes">
+  <div style="display:flex; gap:10px; margin-bottom:14px; align-items:center;">
+    <input type="text" id="search-lote" placeholder="🔍 Buscar lote..." style="flex:1;" oninput="renderLotes()" />
+    <button class="btn btn-primary btn-sm" onclick="loadAllLotes()">🔄</button>
+  </div>
+  <div id="lotes-container">
+    <div class="empty-state">
+      <div class="icon">🌱</div>
+      <p>Nenhum lote encontrado.<br>Crie um novo lote para começar.</p>
     </div>
   </div>
+</div>
 
-  <div class="screen" id="screen-detalhe">
-    <h2 id="d-lote-titulo" style="margin-bottom:15px"></h2>
-    
-    <div class="form-section">
-      <div class="section-header" onclick="this.nextElementSibling.classList.toggle('open')">
-        <h3>Teste de Corte & Foto</h3>
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  ABA: NOVO LOTE                                        -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-novo-lote">
+  <div class="card">
+    <div class="card-header">🌱 Registrar Novo Lote</div>
+    <div class="card-body">
+      <div class="form-group">
+        <label>Número do Lote *</label>
+        <input type="text" id="nl-numero" placeholder="Ex: LOTE-2025-001" />
       </div>
-      <div class="section-body">
-        <div class="field"><label>% Fermentação Total</label><input type="number" id="d-ferm-total"></div>
-        <div class="img-upload-zone" onclick="document.getElementById('foto-input').click()">
-          <input type="file" id="foto-input" accept="image/*" capture="environment" style="display:none" onchange="previewImg(this)">
-          <p>📸 Tirar Foto da Tábua</p>
+      <div class="form-group">
+        <label>Referência</label>
+        <input type="text" id="nl-referencia" placeholder="Ex: Variedade, Origem..." />
+      </div>
+      <div class="row">
+        <div class="form-group">
+          <label>Tipo *</label>
+          <select id="nl-tipo">
+            <option value="">Selecione...</option>
+            <option value="Fazenda">Fazenda</option>
+            <option value="Parceiro">Parceiro</option>
+            <option value="Terceiro">Terceiro</option>
+          </select>
         </div>
-        <div id="preview-container" class="img-preview"></div>
-        <button class="btn btn-gold" style="margin-top:15px" onclick="salvarCorte()">Enviar para Planilha</button>
+        <div class="form-group">
+          <label>Data de Quebra *</label>
+          <input type="date" id="nl-data-quebra" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Observações iniciais</label>
+        <textarea id="nl-obs" placeholder="Anotações sobre o lote..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="criarLote()">
+        ✅ Criar Lote e Iniciar Fermentação
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  ABA: ETIQUETA                                         -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-etiqueta">
+  <div class="card">
+    <div class="card-header">🏷️ Gerador de Etiqueta</div>
+    <div class="card-body">
+      <div class="form-group">
+        <label>Selecionar Lote</label>
+        <select id="etiqueta-lote-select" onchange="previewEtiqueta()">
+          <option value="">Selecione um lote...</option>
+        </select>
+      </div>
+      <div id="etiqueta-preview-area" style="display:none;">
+        <div class="etiqueta-preview" id="etiqueta-print-area">
+          <p style="font-size:11px; color:#999; margin-bottom:4px;">FAZENDA DE CACAU</p>
+          <h2 id="etiq-numero">LOTE-001</h2>
+          <p id="etiq-referencia"></p>
+          <p id="etiq-tipo"></p>
+          <p id="etiq-data"></p>
+          <div id="qrcode-container"></div>
+          <p style="font-size:10px; color:#aaa; margin-top:4px;">Escaneie para ver detalhes</p>
+        </div>
+        <button class="btn btn-primary" onclick="imprimirEtiqueta()" style="margin-top:12px;">
+          🖨️ Imprimir Etiqueta
+        </button>
       </div>
     </div>
   </div>
-</main>
+</div>
 
-<div id="toast"></div>
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  ABA: CHAT IA                                          -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-chat">
+  <details class="api-config" id="api-config-details">
+    <summary>⚙️ Configuração da API de IA</summary>
+    <div style="margin-top:10px;">
+      <div class="form-group">
+        <label>Provedor</label>
+        <select id="ai-provider" onchange="updateProviderUI()">
+          <option value="openai">OpenAI (ChatGPT)</option>
+          <option value="gemini">Google Gemini</option>
+          <option value="anthropic">Anthropic (Claude)</option>
+          <option value="custom">API Personalizada</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Chave de API (API Key)</label>
+        <input type="password" id="ai-api-key" placeholder="sk-..." />
+      </div>
+      <div class="form-group" id="ai-model-group">
+        <label>Modelo</label>
+        <select id="ai-model">
+          <option value="gpt-4o-mini">GPT-4o Mini (Recomendado)</option>
+          <option value="gpt-4o">GPT-4o</option>
+          <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+        </select>
+      </div>
+      <div class="form-group" id="ai-custom-url-group" style="display:none;">
+        <label>URL da API</label>
+        <input type="text" id="ai-custom-url" placeholder="https://api.exemplo.com/v1/chat/completions" />
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="saveApiConfig()" style="width:auto; margin-top:8px;">
+        💾 Salvar Configuração
+      </button>
+    </div>
+  </details>
+
+  <div class="chat-container">
+    <div class="chat-messages" id="chat-messages">
+      <div class="msg system">Chat iniciado. Configure sua API acima para começar.</div>
+      <div class="msg ai">Olá! Sou seu assistente especializado em cacau. Posso ajudar com dúvidas sobre fermentação, secagem, análise sensorial e muito mais. Como posso ajudar?</div>
+    </div>
+    <div class="chat-input-row">
+      <textarea id="chat-input" placeholder="Digite sua mensagem..." rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
+      <button class="chat-btn" id="voice-btn" onclick="toggleVoice()" title="Voz">🎤</button>
+      <button class="chat-btn" onclick="sendChat()" title="Enviar">➤</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  MODAL DE CONFIRMAÇÃO                                  -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal">
+    <h3 id="modal-title">Confirmar ação</h3>
+    <p id="modal-msg">Tem certeza?</p>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-danger" id="modal-confirm-btn">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  TOAST CONTAINER                                       -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="toast-container" id="toast-container"></div>
 
 <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxja7SD8Oj9tZl8p3coUYRbemysKLoUgHp35bvmslNvdiQ-_7dfZgKorCkm8qrz8Vc9/exec";
-  let lotes = JSON.parse(localStorage.getItem('cacaueiro_lotes')) || [];
-  let loteAtivo = null;
+// ═══════════════════════════════════════════════════════════
+//  CONFIGURAÇÃO
+// ═══════════════════════════════════════════════════════════
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxja7SD8Oj9tZl8p3coUYRbemysKLoUgHp35bvmslNvdiQ-_7dfZgKorCkm8qrz8Vc9/exec';
 
-  function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById('screen-' + id).classList.add('active');
-  }
+// ═══════════════════════════════════════════════════════════
+//  ESTADO LOCAL
+// ═══════════════════════════════════════════════════════════
+let lotes = JSON.parse(localStorage.getItem('cacau_lotes') || '[]');
+let aiConfig = JSON.parse(localStorage.getItem('cacau_ai_config') || '{}');
+let chatHistory = [];
+let isRecording = false;
+let mediaRecorder = null;
+let recognition = null;
+let modalCallback = null;
 
-  function toast(msg) {
-    const t = document.getElementById('toast');
-    t.innerText = msg; t.style.display = 'block';
-    setTimeout(() => t.style.display = 'none', 3000);
-  }
+// ═══════════════════════════════════════════════════════════
+//  INICIALIZAÇÃO
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Data padrão = hoje
+  document.getElementById('nl-data-quebra').value = today();
 
-  async function enviarParaGoogle(dados) {
-    try {
-      await fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify(dados)
+  // Carregar config de IA
+  if (aiConfig.apiKey) document.getElementById('ai-api-key').value = aiConfig.apiKey;
+  if (aiConfig.provider) document.getElementById('ai-provider').value = aiConfig.provider;
+  if (aiConfig.model) document.getElementById('ai-model').value = aiConfig.model;
+  if (aiConfig.customUrl) document.getElementById('ai-custom-url').value = aiConfig.customUrl;
+  updateProviderUI();
+
+  // Carregar lotes do backend
+  loadAllLotes();
+
+  // Status de conexão
+  checkConnection();
+});
+
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════════════
+function showTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+
+  if (name === 'etiqueta') populateEtiquetaSelect();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  BACKEND / SYNC
+// ═══════════════════════════════════════════════════════════
+async function apiCall(action, data = {}) {
+  const payload = { action, ...data };
+  const resp = await fetch(BACKEND_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  // no-cors retorna opaque, então salvamos localmente e tentamos GET para leitura
+  return true;
+}
+
+async function apiGet(params = {}) {
+  const qs = new URLSearchParams({ ...params }).toString();
+  try {
+    const resp = await fetch(`${BACKEND_URL}?${qs}`);
+    const text = await resp.text();
+    try { return JSON.parse(text); } catch { return null; }
+  } catch { return null; }
+}
+
+async function loadAllLotes() {
+  setStatus('Sincronizando...', false);
+  try {
+    const data = await apiGet({ action: 'getLotes' });
+    if (data && Array.isArray(data.lotes)) {
+      // Mesclar dados do servidor com local (servidor tem prioridade)
+      const serverMap = {};
+      data.lotes.forEach(l => { serverMap[l.numero] = l; });
+      // Atualizar locais com dados do servidor
+      lotes = lotes.map(l => serverMap[l.numero] ? { ...l, ...serverMap[l.numero] } : l);
+      // Adicionar novos do servidor que não existem localmente
+      data.lotes.forEach(l => {
+        if (!lotes.find(x => x.numero === l.numero)) lotes.push(l);
       });
-      return true;
-    } catch (e) { return false; }
-  }
-
-  function criarLote() {
-    const lote = {
-      id: document.getElementById('n-lote').value,
-      ref: document.getElementById('n-ref').value,
-      data: document.getElementById('n-data-quebra').value,
-      acao: "CRIAR_LOTE"
-    };
-    lotes.push(lote);
-    localStorage.setItem('cacaueiro_lotes', JSON.stringify(lotes));
-    enviarParaGoogle(lote);
-    toast("✅ Lote criado!");
-    showScreen('lotes');
-    renderLotes();
-  }
-
-  function renderLotes() {
-    const list = document.getElementById('lotes-list');
-    list.innerHTML = lotes.map(l => `
-      <div class="form-section" style="padding:15px" onclick="abrirLote('${l.id}')">
-        <strong>${l.id}</strong> - ${l.ref}
-      </div>
-    `).join('');
-  }
-
-  function abrirLote(id) {
-    loteAtivo = lotes.find(l => l.id === id);
-    document.getElementById('d-lote-titulo').innerText = "Lote: " + id;
-    showScreen('detalhe');
-  }
-
-  function previewImg(input) {
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = e => {
-        document.getElementById('preview-container').innerHTML = `<img src="${e.target.result}" id="img-data">`;
-      };
-      reader.readAsDataURL(input.files[0]);
+      saveLocal();
+      setStatus('Sincronizado', true);
+      document.getElementById('last-sync').textContent = 'Última sync: ' + new Date().toLocaleTimeString('pt-BR');
+    } else {
+      setStatus('Usando dados locais', true);
     }
+  } catch (e) {
+    setStatus('Offline - dados locais', false);
+  }
+  renderLotes();
+}
+
+function saveLocal() {
+  localStorage.setItem('cacau_lotes', JSON.stringify(lotes));
+}
+
+async function saveLoteToServer(lote) {
+  try {
+    await apiCall('saveLote', { lote: JSON.stringify(lote) });
+  } catch (e) {
+    console.warn('Falha ao salvar no servidor, mantendo local');
+  }
+}
+
+function setStatus(msg, ok) {
+  document.getElementById('status-text').textContent = msg;
+  document.getElementById('status-dot').className = 'status-dot' + (ok ? '' : ' offline');
+}
+
+async function checkConnection() {
+  try {
+    const r = await fetch(BACKEND_URL + '?action=ping', { signal: AbortSignal.timeout(5000) });
+    setStatus('Conectado ao servidor', true);
+  } catch {
+    setStatus('Offline - dados locais', false);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CRIAR LOTE
+// ═══════════════════════════════════════════════════════════
+function criarLote() {
+  const numero = document.getElementById('nl-numero').value.trim();
+  const referencia = document.getElementById('nl-referencia').value.trim();
+  const tipo = document.getElementById('nl-tipo').value;
+  const dataQuebra = document.getElementById('nl-data-quebra').value;
+  const obs = document.getElementById('nl-obs').value.trim();
+
+  if (!numero) { showToast('Informe o número do lote', 'error'); return; }
+  if (!tipo) { showToast('Selecione o tipo', 'error'); return; }
+  if (!dataQuebra) { showToast('Informe a data de quebra', 'error'); return; }
+  if (lotes.find(l => l.numero === numero)) { showToast('Lote já existe!', 'error'); return; }
+
+  const lote = {
+    numero,
+    referencia,
+    tipo,
+    dataQuebra,
+    obs,
+    criadoEm: new Date().toISOString(),
+    etapas: {
+      fermentacao: { dias: [], dataSaida: '', status: 'pendente' },
+      secagem: { dataEntrada: '', dataSaida: '', tipoDeposito: '', umidadeFinal: '', pesoSeco: '', status: 'pendente' },
+      testeCorte: { fermentacaoTotal: '', fermentacaoParcial: '', fotoUrl: '', fotoBase64: '', obs: '', status: 'pendente' },
+      sensorial: []
+    }
+  };
+
+  lotes.unshift(lote);
+  saveLocal();
+  saveLoteToServer(lote);
+
+  // Limpar form
+  document.getElementById('nl-numero').value = '';
+  document.getElementById('nl-referencia').value = '';
+  document.getElementById('nl-tipo').value = '';
+  document.getElementById('nl-data-quebra').value = today();
+  document.getElementById('nl-obs').value = '';
+
+  showToast('Lote criado com sucesso!', 'success');
+  showTab('lotes');
+  document.querySelector('.tab-btn').click();
+  renderLotes();
+
+  // Abrir o lote recém-criado
+  setTimeout(() => {
+    const el = document.getElementById('lote-' + sanitizeId(numero));
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  }, 300);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER LOTES
+// ═══════════════════════════════════════════════════════════
+function sanitizeId(str) {
+  return str.replace(/[^a-zA-Z0-9]/g, '_');
+}
+
+function renderLotes() {
+  const search = (document.getElementById('search-lote')?.value || '').toLowerCase();
+  const container = document.getElementById('lotes-container');
+
+  const filtered = lotes.filter(l =>
+    l.numero.toLowerCase().includes(search) ||
+    (l.referencia || '').toLowerCase().includes(search) ||
+    (l.tipo || '').toLowerCase().includes(search)
+  );
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">🌱</div><p>Nenhum lote encontrado.</p></div>`;
+    return;
   }
 
-  async function salvarCorte() {
-    const imgElement = document.getElementById('img-data');
-    const dados = {
-      acao: "SALVAR_CORTE",
-      lote: loteAtivo.id,
-      fermentacao: document.getElementById('d-ferm-total').value,
-      foto: imgElement ? imgElement.src : null
-    };
-    
-    toast("⏳ A enviar dados e foto...");
-    const ok = await enviarParaGoogle(dados);
-    toast(ok ? "✅ Sincronizado com a Planilha!" : "⚠️ Salvo apenas localmente");
+  container.innerHTML = filtered.map(lote => buildLoteCard(lote)).join('');
+}
+
+function buildLoteCard(lote) {
+  const id = sanitizeId(lote.numero);
+  const etapas = lote.etapas || {};
+  const ferm = etapas.fermentacao || {};
+  const sec = etapas.secagem || {};
+  const tc = etapas.testeCorte || {};
+  const sens = etapas.sensorial || [];
+
+  const badges = [
+    `<span class="badge ${ferm.status === 'concluido' ? 'done' : ferm.dias?.length > 0 ? 'active' : ''}">🌡️ Ferm.</span>`,
+    `<span class="badge ${sec.status === 'concluido' ? 'done' : sec.dataEntrada ? 'active' : ''}">☀️ Sec.</span>`,
+    `<span class="badge ${tc.status === 'concluido' ? 'done' : tc.fermentacaoTotal ? 'active' : ''}">🔪 Corte</span>`,
+    `<span class="badge ${sens.length > 0 ? 'done' : ''}">👅 Sens.</span>`,
+  ].join('');
+
+  return `
+  <div class="lote-card" id="lote-${id}">
+    <div class="lote-card-header" onclick="toggleLote('${id}')">
+      <div class="lote-info">
+        <h3>📦 ${lote.numero}</h3>
+        <p>${lote.tipo} ${lote.referencia ? '· ' + lote.referencia : ''} · Quebra: ${formatDate(lote.dataQuebra)}</p>
+        <div class="lote-badges">${badges}</div>
+      </div>
+      <div class="lote-actions">
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); confirmDelete('${lote.numero}')">🗑️</button>
+        <span style="font-size:20px; color:var(--text-muted);">▾</span>
+      </div>
+    </div>
+    <div class="lote-body" id="body-${id}">
+      ${buildAccordion(lote)}
+    </div>
+  </div>`;
+}
+
+function toggleLote(id) {
+  const body = document.getElementById('body-' + id);
+  body.classList.toggle('open');
+}
+
+function buildAccordion(lote) {
+  const id = sanitizeId(lote.numero);
+  const e = lote.etapas || {};
+  const ferm = e.fermentacao || { dias: [], dataSaida: '', status: 'pendente' };
+  const sec = e.secagem || {};
+  const tc = e.testeCorte || {};
+  const sens = e.sensorial || [];
+
+  return `
+  <div>
+    <!-- ETAPA 1: INFO BÁSICA -->
+    ${buildAccordionItem(id, 1, '🌱 Etapa 1 — Informações do Lote', false, `
+      <div class="row">
+        <div class="form-group">
+          <label>Número do Lote</label>
+          <input type="text" value="${lote.numero}" readonly style="background:#eee;" />
+        </div>
+        <div class="form-group">
+          <label>Tipo</label>
+          <input type="text" value="${lote.tipo}" readonly style="background:#eee;" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="form-group">
+          <label>Referência</label>
+          <input type="text" id="e1-ref-${id}" value="${lote.referencia || ''}" placeholder="Referência..." />
+        </div>
+        <div class="form-group">
+          <label>Data de Quebra</label>
+          <input type="date" id="e1-dq-${id}" value="${lote.dataQuebra}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Observações</label>
+        <textarea id="e1-obs-${id}" placeholder="Observações...">${lote.obs || ''}</textarea>
+      </div>
+      <button class="btn btn-primary" onclick="salvarEtapa1('${lote.numero}')">💾 Salvar</button>
+    `)}
+
+    <!-- ETAPA 2: FERMENTAÇÃO -->
+    ${buildAccordionItem(id, 2, '🌡️ Etapa 2 — Fermentação', ferm.status === 'concluido', `
+      <div id="ferm-dias-${id}">
+        ${buildFermDias(lote)}
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="addFermDia('${lote.numero}')" style="margin-bottom:12px; width:auto;">
+        ➕ Adicionar Dia
+      </button>
+      <div class="form-group">
+        <label>Data de Saída da Fermentação</label>
+        <input type="date" id="ferm-saida-${id}" value="${ferm.dataSaida || ''}" />
+      </div>
+      <div class="form-group">
+        <label>Observações</label>
+        <textarea id="ferm-obs-${id}" placeholder="Observações sobre a fermentação...">${ferm.obs || ''}</textarea>
+      </div>
+      <button class="btn btn-primary" onclick="salvarFermentacao('${lote.numero}')">💾 Salvar Fermentação</button>
+      <button class="btn btn-success" onclick="concluirFermentacao('${lote.numero}')" style="margin-top:8px;">✅ Concluir Fermentação</button>
+    `)}
+
+    <!-- ETAPA 3: SECAGEM -->
+    ${buildAccordionItem(id, 3, '☀️ Etapa 3 — Secagem', sec.status === 'concluido', `
+      <div class="row">
+        <div class="form-group">
+          <label>Data Entrada Estufa</label>
+          <input type="date" id="sec-entrada-${id}" value="${sec.dataEntrada || ''}" />
+        </div>
+        <div class="form-group">
+          <label>Data Saída Estufa</label>
+          <input type="date" id="sec-saida-${id}" value="${sec.dataSaida || ''}" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="form-group">
+          <label>Tipo de Depósito</label>
+          <select id="sec-deposito-${id}">
+            <option value="">Selecione...</option>
+            <option value="Fino" ${sec.tipoDeposito === 'Fino' ? 'selected' : ''}>Fino</option>
+            <option value="Comum" ${sec.tipoDeposito === 'Comum' ? 'selected' : ''}>Comum</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Umidade Final (%)</label>
+          <input type="number" id="sec-umidade-${id}" value="${sec.umidadeFinal || ''}" step="0.1" min="0" max="100" placeholder="%" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Peso Seco (kg)</label>
+        <input type="number" id="sec-peso-${id}" value="${sec.pesoSeco || ''}" step="0.1" min="0" placeholder="kg" />
+      </div>
+      <div class="form-group">
+        <label>Observações</label>
+        <textarea id="sec-obs-${id}" placeholder="Observações sobre a secagem...">${sec.obs || ''}</textarea>
+      </div>
+      <button class="btn btn-primary" onclick="salvarSecagem('${lote.numero}')">💾 Salvar Secagem</button>
+      <button class="btn btn-success" onclick="concluirSecagem('${lote.numero}')" style="margin-top:8px;">✅ Concluir Secagem</button>
+    `)}
+
+    <!-- ETAPA 4: TESTE DE CORTE -->
+    ${buildAccordionItem(id, 4, '🔪 Etapa 4 — Teste de Corte', tc.status === 'concluido', `
+      <div class="row">
+        <div class="form-group">
+          <label>% Fermentação Total</label>
+          <input type="number" id="tc-total-${id}" value="${tc.fermentacaoTotal || ''}" min="0" max="100" step="0.1" placeholder="%" />
+        </div>
+        <div class="form-group">
+          <label>% Fermentação Parcial</label>
+          <input type="number" id="tc-parcial-${id}" value="${tc.fermentacaoParcial || ''}" min="0" max="100" step="0.1" placeholder="%" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Data do Teste</label>
+        <input type="date" id="tc-data-${id}" value="${tc.dataCorte || today()}" />
+      </div>
+      <div class="form-group">
+        <label>📷 Foto da Tábua de Corte</label>
+        <div class="foto-area" onclick="document.getElementById('foto-input-${id}').click()">
+          <input type="file" id="foto-input-${id}" accept="image/*" capture="environment" style="display:none;" onchange="previewFoto('${id}')" />
+          <div id="foto-preview-${id}">
+            ${tc.fotoBase64 ? `<img src="${tc.fotoBase64}" alt="Foto da tábua" />` : `<div style="font-size:36px;">📷</div><p>Toque para tirar foto ou selecionar</p>`}
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Observações</label>
+        <textarea id="tc-obs-${id}" placeholder="Observações sobre o teste...">${tc.obs || ''}</textarea>
+      </div>
+      <button class="btn btn-primary" onclick="salvarTesteCorte('${lote.numero}')">💾 Salvar Teste de Corte</button>
+      <button class="btn btn-success" onclick="concluirTesteCorte('${lote.numero}')" style="margin-top:8px;">✅ Concluir Teste de Corte</button>
+    `)}
+
+    <!-- ETAPA 5: ANÁLISE SENSORIAL -->
+    ${buildAccordionItem(id, 5, '👅 Etapa 5 — Análise Sensorial', false, `
+      <div id="sensorial-rounds-${id}">
+        ${buildSensorialRounds(lote)}
+      </div>
+      <button class="btn btn-accent" onclick="addSensorialRound('${lote.numero}')" style="margin-top:4px;">
+        ➕ Nova Rodada Sensorial
+      </button>
+    `)}
+  </div>`;
+}
+
+function buildAccordionItem(id, num, title, done, content) {
+  return `
+  <div class="accordion-item">
+    <div class="accordion-header" id="acc-hdr-${id}-${num}" onclick="toggleAccordion('${id}', ${num})">
+      <div class="step-num ${done ? 'done' : ''}">${done ? '✓' : num}</div>
+      <div class="step-title">${title}</div>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="accordion-body" id="acc-body-${id}-${num}">
+      ${content}
+    </div>
+  </div>`;
+}
+
+function toggleAccordion(id, num) {
+  const body = document.getElementById(`acc-body-${id}-${num}`);
+  const hdr = document.getElementById(`acc-hdr-${id}-${num}`);
+  body.classList.toggle('open');
+  hdr.classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  FERMENTAÇÃO
+// ═══════════════════════════════════════════════════════════
+function buildFermDias(lote) {
+  const id = sanitizeId(lote.numero);
+  const dias = (lote.etapas?.fermentacao?.dias || []);
+  if (dias.length === 0) return '<p style="color:var(--text-muted);font-size:13px;margin-bottom:10px;">Nenhum dia registrado ainda.</p>';
+
+  return `
+  <div style="overflow-x:auto; margin-bottom:12px;">
+    <table class="temp-table">
+      <thead>
+        <tr>
+          <th>Dia</th>
+          <th>Data</th>
+          <th>T1 (°C)</th>
+          <th>T2 (°C)</th>
+          <th>T3 (°C)</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${dias.map((d, i) => `
+        <tr>
+          <td style="text-align:center;font-weight:700;">${i + 1}</td>
+          <td><input type="date" id="fd-data-${id}-${i}" value="${d.data || ''}" style="min-width:120px;" /></td>
+          <td><input type="number" id="fd-t1-${id}-${i}" value="${d.t1 || ''}" step="0.1" /></td>
+          <td><input type="number" id="fd-t2-${id}-${i}" value="${d.t2 || ''}" step="0.1" /></td>
+          <td><input type="number" id="fd-t3-${id}-${i}" value="${d.t3 || ''}" step="0.1" /></td>
+          <td><button class="btn btn-danger btn-sm" onclick="removeFermDia('${lote.numero}', ${i})">✕</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function addFermDia(numero) {
+  const lote = lotes.find(l => l.numero === numero);
+  if (!lote) return;
+  const dias = lote.etapas.fermentacao.dias;
+  if (dias.length >= 15) { showToast('Máximo de 15 dias', 'error'); return; }
+
+  // Coletar valores atuais dos inputs antes de re-renderizar
+  collectFermDias(lote);
+
+  dias.push({ data: today(), t1: '', t2: '', t3: '' });
+  saveLocal();
+  rerenderLoteBody(lote);
+}
+
+function removeFermDia(numero, idx) {
+  const lote = lotes.find(l => l.numero === numero);
+  if (!lote) return;
+  collectFermDias(lote);
+  lote.etapas.fermentacao.dias.splice(idx, 1);
+  saveLocal();
+  rerenderLoteBody(lote);
+}
+
+function collectFermDias(lote) {
+  const id = sanitizeId(lote.numero);
+  const dias = lote.etapas.fermentacao.dias;
+  dias.forEach((d, i) => {
+    const data = document.getElementById(`fd-data-${id}-${i}`);
+    const t1 = document.getElementById(`fd-t1-${id}-${i}`);
+    const t2 = document.getElementById(`fd-t2-${id}-${i}`);
+    const t3 = document.getElementById(`fd-t3-${id}-${i}`);
+    if (data) d.data = data.value;
+    if (t1) d.t1 = t1.value;
+    if (t2) d.t2 = t2.value;
+    if (t3) d.t3 = t3.value;
+  });
+}
+
+function salvarFermentacao(numero) {
+  const lote = lotes.find(l => l.numero === numero);
+  if (!lote) return;
+  const id = sanitizeId(numero);
+  collectFermDias(lote);
+  lote.etapas.fermentacao.dataSaida = document.getElementById(`ferm-saida-${id}`)?.value || '';
+  lote.etapas.fermentacao.obs = document.getElementById(`ferm-obs-${id}`)?.value || '';
+  saveLocal();
+  saveLoteToServer(lote);
+  showToast('Fermentação salva!', 'success');
+}
+
+function concluirFermentacao(numero) {
+  const lote = lotes.find(l => l.numero === numero);
+  if (!lote) return;
+  salvarFermentacao(numero);
+  lote.etapas.fermentacao.status = 'concluido';
+  saveLocal();
+  saveLoteToServer(lote);
+  rerenderLoteBody(lote);
+  showToast('Fermentação concluída!', 'success');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ETAPA 1 - SALVAR
+// ═══════════════════════════════════════════════════════════
+function salvarEtapa1(numero) {
+  const lote = lotes.find(l => l.numero === numero);
+  if (!lote) return;
+  const id = sanitizeId(numero);
+  lote.referencia = document.getElementById(`e1-ref-${id}`)?.value || '';
+  lote.dataQuebra = document.getElementById(`e1-dq-${id}`)?.value || '';
+  lote.obs = document.getElementById(`e1-obs-${id}`)?.value || '';
+  saveLocal();
+  saveLoteToServer(lote);
+  showToast('Informações salvas!', 'success');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SECAGEM
+// ═══════════════════════════════════════════════════════════
+function salvarSecagem(numero) {
+  const lote = lotes.find(l => l.numero === numero);
+  if (!lote) return;
+  const id = sanitizeId(numero);
+  lote.etapas.secagem = {
+    dataEntrada: document.getElementById(`sec-entrada-${id}`)?.value || '',
+    dataSaida: document.getElementById(`sec-saida-${id}`)?.value || '',
+    tipoDeposito: document.getElementById(`sec-deposito-${id}`)?.value || '',
+    umidadeFinal: document.getElementById(`sec-umidade-${id}`)?.value || '',
+    pesoSeco: document.getElementById(`sec-peso-${id}`)?.value || '',
+    obs: document.getElementById(`sec-obs-${id}`)?.value || '',
+    status: lote.etapas.secagem?.status || 'pendente'
+  };
+  saveLocal();
+  saveLoteToServer(lote);
+  showToast('Secagem salva!', 'success');
+}
+
+function concluirSecagem(numero) {
+  const lote = lotes.find(l => l.numero === numero);
+  if (!lote) return;
+  salvarSecagem(numero);
+  lote.etapas.secagem.status = 'concluido';
+  saveLocal();
+  saveLoteToServer(lote);
+  rerenderLoteBody(lote);
+  showToast('Secagem concluída!', 'success');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TESTE DE CORTE
+// ═══════════════════════════════════════════════════════════
+function previewFoto(id) {
+  const input = document.getElementById(`foto-input-${id}`);
+  const preview = document.getElementById(`foto-preview-${id}`);
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    preview.innerHTML = `<img src="${e.target.result}" alt="Foto da tábua" />`;
+    // Guardar base64 temporariamente
+    const loteNum = id.replace(/_/g, '-'); // Tentativa simples
+    // Buscar lote pelo id sanitizado
+    const lote = lotes.find(l => sanitizeId(l.numero) === id);
+    if (lote) {
+      lote.etapas.testeCorte._fotoTemp = e.target.result;
+    }
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function salvarTesteCorte(numero) {
+  const lote = lotes.find(l => l.numero === numero);
+  if (!lote) return;
+  const id = sanitizeId(numero);
+  const fotoBase64 = lote.etapas.testeCorte._fotoTemp || lote.etapas.testeCorte.fotoBase64 || '';
+  lote.etapas.testeCorte = {
+    fermentacaoTotal: document.getElementById(`tc-total-${id}`)?.value || '',
+    fermentacaoParcial: document.getElementById(`tc-parcial-${id}`)?.value || '',
+    dataCorte: document.getElementById(`tc-data-${id}`)?.value || today(),
+    obs: document.getElementById(`tc-obs-${id}`)?.value || '',
+    fotoBase64,
+    status: lote.etapas.testeCorte?.status || 'pendente'
+  };
+  saveLocal();
+  saveLoteToServer(lote);
+  showToast('Teste de corte salvo!', 'success');
+}
+
+function concluirTesteCorte(numero) {
+  const lote = lotes.find(l => l.numero === numero);
+  if (!lote) return;
+  salvarTesteCorte(numero);
+  lote.etapas.testeCorte.status = 'concluido';
+  saveLocal();
+  saveLoteToServer(lote);
+  rerenderLoteBody(lote);
+  showToast('Teste de corte concluído!', 'success');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ANÁLISE SENSORIAL
+// ═══════════════════════════════════════════════════════════
+function buildSensorialRounds(lote) {
+  const id = sanitizeId(lote.numero);
+  const rounds = lote.etapas?.sensorial || [];
+  if (rounds.length === 0) return '<p style="color:var(--text-muted);font-size:13px;">Nenhuma rodada sensorial registrada.</p>';
+  return rounds.map((r, i) => buildSensorialRound(lote.numero, i, r)).join('');
+}
+
+function buildSensorialRound(numero, idx, round) {
+  const id = sanitizeId(numero);
+  const rid = `${id}-r${idx}`;
+  const notas = ['Frutado', 'Floral', 'Amêndoas', 'Chocolate'];
+  const defeitos = ['Mofo', 'Fumaça', 'Off-notes'];
+
+  const buildScale = (attr, label, val) => `
+    <div class="scale-group">
+      <div class="scale-label">${label}</div>
+      <div class="scale-options">
+        ${[0,1,2,3,4,5].map(n => `
+        <label>
+          <input type="radio" name="scale-${rid}-${attr}" value="${n}" ${val == n ? 'checked' : ''} onchange="collectSensorial('${numero}', ${idx})" />
+          <div class="scale-btn">${n}</div>
+          <span>${n === 0 ? 'Aus.' : n === 5 ? 'Def.' : ''}</span>
+        </label>`).join('')}
+      </div>
+    </div>`;
+
+  const buildChecklist = (items, field) => `
+    <div class="checklist" id="cl-${rid}-${field}">
+      ${items.map(item => `
+      <div class="check-item ${(round[field] || []).includes(item) ? 'checked' : ''}"
+           onclick="toggleCheck(this, '${numero}', ${idx}, '${field}', '${item}')">
+        <input type="checkbox" ${(round[field] || []).includes(item) ? 'checked' : ''} />
+        ${item}
+      </div>`).join('')}
+    </div>`;
+
+  return `
+  <div class="sensorial-round" id="sr-${rid}">
+    <div class="sensorial-round-header">
+      <h4>🍫 Rodada ${idx + 1} ${round.data ? '— ' + formatDate(round.data) : ''}</h4>
+      <button class="btn btn-danger btn-sm" onclick="removeSensorialRound('${numero}', ${idx})">🗑️</button>
+    </div>
+    <div class="form-group">
+      <label>Data da Análise</label>
+      <input type="date" id="sr-data-${rid}" value="${round.data || today()}" onchange="collectSensorial('${numero}', ${idx})" />
+    </div>
+    <div class="form-group">
+      <label>Motivo / Observação</label>
+      <input type="text" id="sr-motivo-${rid}" value="${round.motivo || ''}" placeholder="Ex: Ajuste de acidez, avaliação final..." onchange="collectSensorial('${numero}', ${idx})" />
+    </div>
+    <h5 style="margin:12px 0 8px; color:var(--primary); font-size:13px;">ESCALA DE DEFEITOS (0=Ausente · 5=Defeito)</h5>
+    ${buildScale('acidez', 'Acidez', round.acidez)}
+    ${buildScale('amargor', 'Amargor', round.amargor)}
+    ${buildScale('adstringencia', 'Adstringência', round.adstringencia)}
+    <h5 style="margin:12px 0 8px; color:var(--primary); font-size:13px;">NOTAS DE SABOR</h5>
+    ${buildChecklist(notas, 'notasSabor')}
+    <h5 style="margin:12px 0 8px; color:var(--primary); font-size:13px;">DEFEITOS DETECTADOS</h5>
+    ${buildChecklist(defeitos, 'defeitos')}
+    <div class="form-group" style="margin-top:12px;">
+      <label>Observações Gerais</label>
+      <textarea id="sr-obs-${rid}" placeholder="Observações..." onchange="collectSensorial('${numero}', ${idx})">${round.obs || ''}</textarea>
+    </div>
+    <button class="btn btn-primary" onclick="salvarSensorial('${numero}', ${idx})">💾 Salvar Rodada ${idx + 1}</button>
+  </div>`;
+}
+
+function addSensorialRound(numero) {
+  const lote = lotes.find(l => l.numero === numero);
+  if (!lote) return;
+  lote.etapas.sensorial.push({
+    data: today(), motivo: '', acidez: null, amargor: null, adstringencia: null,
+    notasSabor: [], defeitos: [], obs: ''
+  });
+  saveLocal();
+  rerenderLoteBody(lote);
+}
+
+function removeSensorialRound(numero, idx) {
+  const lote = lotes.find(l => l.numero === numero);
+  if (!lote) return;
+  lote.etapas.sensorial.splice(idx, 1);
+  saveLocal();
+  saveLoteToServer(lote);
+  rerenderLoteBody(lote);
+}
+
+function collectSensorial(numero, idx) {
+  const lote = lotes.find(l => l.numero === numero);
+  if (!lote || !lote.etapas.sensorial[idx]) return;
+  const id = sanitizeId(numero);
+  const rid = `${id}-r${idx}`;
+  const r = lote.etapas.sensorial[idx];
+  r.data = document.getElementById(`sr-data-${rid}`)?.value || '';
+  r.motivo = document.getElementById(`sr-motivo-${rid}`)?.value || '';
+  r.obs = document.getElementById(`sr-obs-${rid}`)?.value || '';
+  // Escalas via radio
+  ['acidez','amargor','adstringencia'].forEach(attr => {
+    const sel = document.querySelector(`input[name="scale-${rid}-${attr}"]:checked`);
+    r[attr] = sel ? parseInt(sel.value) : null;
+  });
+}
+
+function toggleCheck(el, numero, idx, field, item) {
+  const lote = lotes.find(l => l.numero === numero);
+  if (!lote || !lote.etapas.sensorial[idx]) return;
+  const r = lote.etapas.sensorial[idx];
+  if (!r[field]) r[field] = [];
+  const pos = r[field].indexOf(item);
+  if (pos === -1) { r[field].push(item); el.classList.add('checked'); }
+  else { r[field].splice(pos, 1); el.classList.remove('checked'); }
+}
+
+function salvarSensorial(numero, idx) {
+  const lote = lotes.find(l => l.numero === numero);
+  if (!lote) return;
+  collectSensorial(numero, idx);
+  saveLocal();
+  saveLoteToServer(lote);
+  showToast(`Rodada ${idx + 1} salva!`, 'success');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RE-RENDER PARCIAL
+// ═══════════════════════════════════════════════════════════
+function rerenderLoteBody(lote) {
+  const id = sanitizeId(lote.numero);
+  const body = document.getElementById(`body-${id}`);
+  if (!body) { renderLotes(); return; }
+  const wasOpen = body.classList.contains('open');
+  body.innerHTML = buildAccordion(lote);
+  if (wasOpen) body.classList.add('open');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EXCLUIR LOTE
+// ═══════════════════════════════════════════════════════════
+function confirmDelete(numero) {
+  showModal(
+    '🗑️ Excluir Lote',
+    `Tem certeza que deseja excluir o lote "${numero}"? Esta ação não pode ser desfeita.`,
+    () => deleteLote(numero)
+  );
+}
+
+async function deleteLote(numero) {
+  lotes = lotes.filter(l => l.numero !== numero);
+  saveLocal();
+  try {
+    await apiCall('deleteLote', { numero });
+  } catch {}
+  renderLotes();
+  showToast('Lote excluído!', 'success');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ETIQUETA
+// ═══════════════════════════════════════════════════════════
+function populateEtiquetaSelect() {
+  const sel = document.getElementById('etiqueta-lote-select');
+  sel.innerHTML = '<option value="">Selecione um lote...</option>' +
+    lotes.map(l => `<option value="${l.numero}">${l.numero} — ${l.tipo}</option>`).join('');
+}
+
+let qrInstance = null;
+function previewEtiqueta() {
+  const numero = document.getElementById('etiqueta-lote-select').value;
+  if (!numero) { document.getElementById('etiqueta-preview-area').style.display = 'none'; return; }
+  const lote = lotes.find(l => l.numero === numero);
+  if (!lote) return;
+
+  document.getElementById('etiq-numero').textContent = lote.numero;
+  document.getElementById('etiq-referencia').textContent = lote.referencia || '';
+  document.getElementById('etiq-tipo').textContent = lote.tipo;
+  document.getElementById('etiq-data').textContent = 'Quebra: ' + formatDate(lote.dataQuebra);
+
+  const qrContainer = document.getElementById('qrcode-container');
+  qrContainer.innerHTML = '';
+  const qrData = `${window.location.href}?lote=${encodeURIComponent(numero)}`;
+  new QRCode(qrContainer, { text: qrData, width: 120, height: 120, correctLevel: QRCode.CorrectLevel.M });
+
+  document.getElementById('etiqueta-preview-area').style.display = 'block';
+}
+
+function imprimirEtiqueta() {
+  const area = document.getElementById('etiqueta-print-area');
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>Etiqueta</title>
+    <style>
+      body { font-family: sans-serif; text-align: center; padding: 20px; }
+      h2 { font-size: 24px; }
+      p { font-size: 14px; color: #555; margin: 4px 0; }
+      #qr { display: flex; justify-content: center; margin: 12px 0; }
+    </style></head><body>
+    <p style="font-size:11px;color:#999;">FAZENDA DE CACAU</p>
+    <h2>${document.getElementById('etiq-numero').textContent}</h2>
+    <p>${document.getElementById('etiq-referencia').textContent}</p>
+    <p>${document.getElementById('etiq-tipo').textContent}</p>
+    <p>${document.getElementById('etiq-data').textContent}</p>
+    <div id="qr"></div>
+    <p style="font-size:10px;color:#aaa;">Escaneie para ver detalhes</p>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script>
+    <script>
+      new QRCode(document.getElementById('qr'), {
+        text: '${window.location.href}?lote=${encodeURIComponent(document.getElementById('etiq-numero').textContent)}',
+        width: 120, height: 120
+      });
+      setTimeout(() => window.print(), 800);
+    <\/script>
+    </body></html>`);
+  w.document.close();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CHAT IA
+// ═══════════════════════════════════════════════════════════
+function updateProviderUI() {
+  const provider = document.getElementById('ai-provider').value;
+  const modelGroup = document.getElementById('ai-model-group');
+  const customUrlGroup = document.getElementById('ai-custom-url-group');
+  const modelSel = document.getElementById('ai-model');
+
+  customUrlGroup.style.display = provider === 'custom' ? 'block' : 'none';
+
+  if (provider === 'openai') {
+    modelSel.innerHTML = `
+      <option value="gpt-4o-mini">GPT-4o Mini (Recomendado)</option>
+      <option value="gpt-4o">GPT-4o</option>
+      <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>`;
+    modelGroup.style.display = 'block';
+  } else if (provider === 'gemini') {
+    modelSel.innerHTML = `
+      <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+      <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>`;
+    modelGroup.style.display = 'block';
+  } else if (provider === 'anthropic') {
+    modelSel.innerHTML = `
+      <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+      <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>`;
+    modelGroup.style.display = 'block';
+  } else {
+    modelGroup.style.display = 'none';
+  }
+}
+
+function saveApiConfig() {
+  aiConfig = {
+    provider: document.getElementById('ai-provider').value,
+    apiKey: document.getElementById('ai-api-key').value,
+    model: document.getElementById('ai-model').value,
+    customUrl: document.getElementById('ai-custom-url').value
+  };
+  localStorage.setItem('cacau_ai_config', JSON.stringify(aiConfig));
+  showToast('Configuração de IA salva!', 'success');
+  document.getElementById('api-config-details').removeAttribute('open');
+}
+
+function addChatMsg(role, text) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.textContent = text;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return div;
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  if (!aiConfig.apiKey) {
+    addChatMsg('system', '⚠️ Configure sua API Key nas configurações acima.');
+    return;
   }
 
-  window.onload = renderLotes;
+  addChatMsg('user', text);
+  chatHistory.push({ role: 'user', content: text });
+
+  const typingDiv = addChatMsg('ai', '...');
+  typingDiv.style.opacity = '0.5';
+
+  try {
+    const response = await callAI(text);
+    typingDiv.textContent = response;
+    typingDiv.style.opacity = '1';
+    chatHistory.push({ role: 'assistant', content: response });
+  } catch (e) {
+    typingDiv.textContent = '❌ Erro ao conectar com a IA: ' + e.message;
+    typingDiv.style.opacity = '1';
+  }
+}
+
+async function callAI(userMsg) {
+  const provider = aiConfig.provider || 'openai';
+  const apiKey = aiConfig.apiKey;
+  const model = aiConfig.model || 'gpt-4o-mini';
+
+  const systemPrompt = `Você é um assistente especializado em cacau e chocolate. 
+Você tem conhecimento profundo sobre fermentação de cacau, secagem, análise sensorial, 
+teste de corte, beneficiamento e produção de chocolate fino. 
+Responda sempre em português brasileiro de forma clara e prática.
+Contexto: O usuário está usando um sistema de controle de pós-colheita de cacau.`;
+
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    ...chatHistory.slice(-10),
+    { role: 'user', content: userMsg }
+  ];
+
+  if (provider === 'openai') {
+    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ model, messages, max_tokens: 1000 })
+    });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+    return data.choices[0].message.content;
+
+  } else if (provider === 'gemini') {
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: messages.filter(m => m.role !== 'system').map(m => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }]
+        })),
+        systemInstruction: { parts: [{ text: systemPrompt }] }
+      })
+    });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+    return data.candidates[0].content.parts[0].text;
+
+  } else if (provider === 'anthropic') {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model, max_tokens: 1000,
+        system: systemPrompt,
+        messages: messages.filter(m => m.role !== 'system')
+      })
+    });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+    return data.content[0].text;
+
+  } else if (provider === 'custom') {
+    const url = aiConfig.customUrl;
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ model, messages, max_tokens: 1000 })
+    });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+    return data.choices[0].message.content;
+  }
+
+  throw new Error('Provedor não suportado');
+}
+
+// ── VOZ ──
+function toggleVoice() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('Reconhecimento de voz não suportado neste navegador', 'error');
+    return;
+  }
+  if (isRecording) {
+    stopVoice();
+  } else {
+    startVoice();
+  }
+}
+
+function startVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'pt-BR';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.onresult = e => {
+    const text = e.results[0][0].transcript;
+    document.getElementById('chat-input').value = text;
+    stopVoice();
+    sendChat();
+  };
+  recognition.onerror = () => stopVoice();
+  recognition.onend = () => stopVoice();
+  recognition.start();
+  isRecording = true;
+  document.getElementById('voice-btn').classList.add('recording');
+  document.getElementById('voice-btn').textContent = '⏹️';
+}
+
+function stopVoice() {
+  if (recognition) { try { recognition.stop(); } catch {} }
+  isRecording = false;
+  document.getElementById('voice-btn').classList.remove('recording');
+  document.getElementById('voice-btn').textContent = '🎤';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════════════════
+function showModal(title, msg, onConfirm) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-msg').textContent = msg;
+  document.getElementById('modal-confirm-btn').onclick = () => { closeModal(); onConfirm(); };
+  document.getElementById('modal-confirm').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-confirm').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════════
+function showToast(msg, type = '') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UTILITÁRIOS
+// ═══════════════════════════════════════════════════════════
+function formatDate(d) {
+  if (!d) return '—';
+  const [y, m, day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+// Verificar se há lote na URL (QR Code)
+function checkUrlLote() {
+  const params = new URLSearchParams(window.location.search);
+  const loteNum = params.get('lote');
+  if (loteNum) {
+    setTimeout(() => {
+      const lote = lotes.find(l => l.numero === loteNum);
+      if (lote) {
+        const id = sanitizeId(loteNum);
+        const el = document.getElementById(`lote-${id}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+          document.getElementById(`body-${id}`).classList.add('open');
+        }
+      }
+    }, 1000);
+  }
+}
+
+// Inicializar
+renderLotes();
+setTimeout(checkUrlLote, 500);
 </script>
-
 </body>
 </html>
