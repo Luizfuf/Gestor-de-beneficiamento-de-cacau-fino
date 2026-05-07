@@ -1204,7 +1204,92 @@
 
 <!-- TOAST -->
 <div id="toast"></div>
+/* ... código anterior de estilos e HTML ... */
 
+// ═══════════════════════════════════════════════
+//  CONFIGURAÇÃO DE CONEXÃO (Linha 1207)
+// ═══════════════════════════════════════════════
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxja7SD8Oj9tZl8p3coUYRbemysKLoUgHp35bvmslNvdiQ-_7dfZgKorCkm8qrz8Vc9/exec";
+
+// Função para enviar os dados para o Google Sheets
+async function enviarParaGoogleSheets(dados) {
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Necessário para evitar erros de CORS no Google Apps Script
+            cache: 'no-cache',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dados)
+        });
+        console.log("Dados enviados para o Google");
+    } catch (error) {
+        console.error("Erro ao enviar para o Google Sheets:", error);
+    }
+}
+
+// ═══════════════════════════════════════════════
+//  FUNÇÕES DE SALVAMENTO ATUALIZADAS
+// ═══════════════════════════════════════════════
+
+function criarLote() {
+    const id = document.getElementById('n-lote').value.trim();
+    const ref = document.getElementById('n-ref').value.trim();
+    const dataQuebra = document.getElementById('n-data-quebra').value;
+    
+    if (!id || !dataQuebra) {
+        toast("⚠️ Preencha o número do lote e a data.");
+        return;
+    }
+
+    const novoLote = {
+        id,
+        ref,
+        dataQuebra,
+        caixas: document.getElementById('n-caixas').value,
+        tipo: document.querySelector('#n-tipo .selected').dataset.val,
+        tipoFerm: document.querySelector('#n-tipo-ferm').dataset.val,
+        entradaFerm: document.getElementById('n-entrada-ferm').value,
+        status: 'Ativo',
+        etapaAtual: 1,
+        criadoEm: new Date().toISOString()
+    };
+
+    lotes.unshift(novoLote);
+    localStorage.setItem('cacaueiro_lotes', JSON.stringify(lotes));
+    
+    // ENVIO PARA O GOOGLE SHEETS
+    enviarParaGoogleSheets({...novoLote, acao: "CRIAR_LOTE"});
+
+    renderLotes();
+    abrirLote(id);
+    toast("🌱 Lote criado e enviado para a planilha!");
+}
+
+function salvarCorte() {
+    if (!loteAtivo) return;
+
+    // Captura os dados do formulário
+    const dadosCorte = {
+        acao: "SALVAR_CORTE",
+        loteId: loteAtivo.id,
+        dataCorte: document.getElementById('d-data-corte').value,
+        fermTotal: document.getElementById('d-ferm-total').value,
+        fermParcial: document.getElementById('d-ferm-parcial').value,
+        fotoBase64: document.getElementById('img-preview-img').src // Envia a foto
+    };
+
+    // Atualiza localmente
+    loteAtivo.testeCorte = dadosCorte;
+    localStorage.setItem('cacaueiro_lotes', JSON.stringify(lotes));
+
+    // ENVIO PARA O GOOGLE SHEETS
+    enviarParaGoogleSheets(dadosCorte);
+
+    toast("💾 Teste de corte salvo e enviado!");
+    renderLotes();
+}
+
+/* ... restante das funções (salvarFermentacao, salvarSecagem, etc) devem seguir o mesmo padrão de chamar enviarParaGoogleSheets ... */
 <script>
 // ═══════════════════════════════════════════════
 //  STATE
