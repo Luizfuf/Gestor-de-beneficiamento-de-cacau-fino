@@ -1,2196 +1,535 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Cacaueiro — Controle de Beneficiamento</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<style>
-  :root {
-    --cacao: #3B1F0A;
-    --terra: #6B3A1F;
-    --ouro: #C28B3A;
-    --mel: #E8B86D;
-    --areia: #F5ECD7;
-    --creme: #FBF6EC;
-    --verde: #2D5016;
-    --verde-claro: #4A7C2A;
-    --erro: #C0392B;
-    --sucesso: #27AE60;
-    --cinza: #8B7355;
-    --sombra: rgba(59,31,10,0.15);
-    --r: 12px;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Cacau Pro — Controle de Pós-Colheita</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --primary: #5C3317;
+      --primary-light: #7B4A2A;
+      --accent: #C8860A;
+      --bg: #FDF6EC;
+      --card: #FFFFFF;
+      --text: #2C1A0E;
+      --border: #D4B896;
+      --success: #2E7D32;
+      --danger: #C62828;
+      --radius: 12px;
+    }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--creme);
-    color: var(--cacao);
-    min-height: 100vh;
-    padding-bottom: 80px;
-  }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.4;
+    }
 
-  /* ── HEADER ── */
-  header {
-    background: var(--cacao);
-    color: var(--areia);
-    padding: 18px 20px 14px;
-    position: sticky; top: 0; z-index: 100;
-    box-shadow: 0 2px 12px var(--sombra);
-  }
-  header h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.5rem;
-    letter-spacing: 0.02em;
-  }
-  header p { font-size: 0.75rem; color: var(--mel); margin-top: 2px; }
+    /* ── HEADER ── */
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 15px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    header h1 { font-size: 20px; }
 
-  /* ── NAV TABS ── */
-  .nav-tabs {
-    display: flex; overflow-x: auto; gap: 6px;
-    padding: 14px 16px 0;
-    background: var(--cacao);
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .nav-tabs::-webkit-scrollbar { display: none; }
+    /* ── STATUS ── */
+    .status-bar {
+      background: #eee;
+      padding: 5px 15px;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #ddd;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+    .dot.online { background: var(--success); }
+    .dot.offline { background: var(--danger); }
 
-  .tab-btn {
-    flex-shrink: 0;
-    padding: 8px 16px;
-    border: none; border-radius: 20px 20px 0 0;
-    background: rgba(255,255,255,0.1);
-    color: var(--mel);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.8rem; font-weight: 500;
-    cursor: pointer; transition: all 0.2s;
-  }
-  .tab-btn.active {
-    background: var(--creme);
-    color: var(--cacao);
-    font-weight: 600;
-  }
-  .tab-btn .badge {
-    display: inline-block;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--ouro);
-    margin-left: 5px;
-    vertical-align: middle;
-  }
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      background: var(--primary-light);
+      position: sticky;
+      top: 54px;
+      z-index: 99;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: none;
+      color: rgba(255,255,255,0.7);
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      color: #fff;
+      border-bottom: 3px solid var(--accent);
+      background: rgba(255,255,255,0.1);
+    }
 
-  /* ── MAIN ── */
-  main { padding: 20px 16px; max-width: 600px; margin: 0 auto; }
+    .content { padding: 15px; max-width: 600px; margin: 0 auto; padding-bottom: 80px; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
 
-  /* ── SCREEN ── */
-  .screen { display: none; animation: fadeIn 0.25s ease; }
-  .screen.active { display: block; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    /* ── CARDS ── */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      border: 1px solid var(--border);
+    }
+    .card-title {
+      font-weight: bold;
+      color: var(--primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+    }
 
-  /* ── LOTE CARDS ── */
-  .lotes-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 16px;
-  }
-  .lotes-header h2 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.2rem;
-  }
+    /* ── FORMS ── */
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #666; }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      background: #fff;
+    }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.2s;
+    }
+    .btn:active { opacity: 0.7; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-accent { background: var(--accent); color: #fff; }
+    .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+    .btn-danger { background: var(--danger); color: #fff; }
 
-  .lote-card {
-    background: white;
-    border-radius: var(--r);
-    border-left: 4px solid var(--ouro);
-    padding: 14px 16px;
-    margin-bottom: 12px;
-    box-shadow: 0 2px 8px var(--sombra);
-    cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s;
-    position: relative;
-  }
-  .lote-card:active { transform: scale(0.98); }
-  .lote-card:hover { box-shadow: 0 4px 16px var(--sombra); }
+    /* ── LOTES LIST ── */
+    .lote-item {
+      background: #fff;
+      border-radius: var(--radius);
+      margin-bottom: 10px;
+      border-left: 4px solid var(--accent);
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .lote-header {
+      padding: 12px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .lote-header h3 { font-size: 16px; color: var(--primary); }
+    .lote-header p { font-size: 11px; color: #888; }
+    .lote-details { display: none; padding: 15px; border-top: 1px solid #eee; background: #fafafa; }
+    .lote-details.open { display: block; }
 
-  .lote-card .lote-num {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.1rem; font-weight: 700;
-    color: var(--cacao);
-  }
-  .lote-card .lote-ref {
-    font-size: 0.8rem; color: var(--cinza); margin-top: 2px;
-  }
-  .lote-card .lote-status {
-    display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap;
-  }
-  .step-pill {
-    font-size: 0.68rem; padding: 3px 9px;
-    border-radius: 20px; font-weight: 500;
-  }
-  .step-pill.done { background: var(--verde); color: white; }
-  .step-pill.pending { background: var(--areia); color: var(--cinza); border: 1px solid var(--mel); }
-  .step-pill.active { background: var(--ouro); color: white; }
+    /* ── FERMENTAÇÃO ── */
+    .ferm-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .ferm-table th { font-size: 11px; text-align: center; padding: 5px; background: #eee; }
+    .ferm-table td { padding: 3px; }
+    .ferm-table input { padding: 5px; text-align: center; font-size: 13px; }
 
-  .lote-card .lote-arrow {
-    position: absolute; right: 14px; top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.2rem; color: var(--mel);
-  }
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      display: none;
+      z-index: 1000;
+    }
 
-  /* ── FORM SECTIONS ── */
-  .form-section {
-    background: white;
-    border-radius: var(--r);
-    overflow: hidden;
-    margin-bottom: 14px;
-    box-shadow: 0 2px 8px var(--sombra);
-  }
+    /* ── VIEW MODE (QR CODE) ── */
+    .view-mode-header {
+      background: var(--accent);
+      color: #fff;
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 14px;
+      display: none;
+    }
+    body.view-only .edit-only { display: none !important; }
+    body.view-only .view-mode-header { display: block; }
+    
+    .floating-edit {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 56px;
+      height: 56px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      z-index: 1001;
+      text-decoration: none;
+    }
+    body.view-only .floating-edit { display: flex; }
 
-  .section-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 16px;
-    background: var(--cacao);
-    color: var(--areia);
-    cursor: pointer;
-    user-select: none;
-  }
-  .section-header h3 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1rem;
-    display: flex; align-items: center; gap: 10px;
-  }
-  .section-header .step-icon {
-    width: 28px; height: 28px; border-radius: 50%;
-    background: var(--ouro); color: var(--cacao);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.75rem; font-weight: 700; flex-shrink: 0;
-  }
-  .section-header .step-icon.done { background: var(--sucesso); color: white; }
-  .section-header .chevron {
-    transition: transform 0.25s;
-    font-size: 1rem; color: var(--mel);
-  }
-  .section-header.open .chevron { transform: rotate(180deg); }
-
-  .section-body {
-    display: none; padding: 18px 16px;
-  }
-  .section-body.open { display: block; }
-
-  /* ── FORM FIELDS ── */
-  .field { margin-bottom: 16px; }
-  .field label {
-    display: block;
-    font-size: 0.78rem; font-weight: 600;
-    color: var(--terra); margin-bottom: 6px;
-    text-transform: uppercase; letter-spacing: 0.05em;
-  }
-  .field input, .field select, .field textarea {
-    width: 100%;
-    padding: 12px 14px;
-    border: 1.5px solid var(--areia);
-    border-radius: 8px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 1rem;
-    background: var(--creme);
-    color: var(--cacao);
-    transition: border-color 0.2s;
-    -webkit-appearance: none;
-  }
-  .field input:focus, .field select:focus, .field textarea:focus {
-    outline: none;
-    border-color: var(--ouro);
-    background: white;
-  }
-  .field textarea { min-height: 80px; resize: vertical; }
-
-  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-
-  .radio-group { display: flex; gap: 10px; flex-wrap: wrap; }
-  .radio-btn {
-    flex: 1; min-width: 80px;
-    padding: 10px 8px;
-    border: 1.5px solid var(--areia);
-    border-radius: 8px;
-    background: var(--creme);
-    color: var(--cinza);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.85rem; font-weight: 500;
-    cursor: pointer; text-align: center;
-    transition: all 0.15s;
-  }
-  .radio-btn.selected {
-    border-color: var(--ouro);
-    background: var(--ouro);
-    color: white;
-  }
-
-  /* ── FERMENTAÇÃO TABLE ── */
-  .ferm-table-wrap { overflow-x: auto; margin: 0 -4px; }
-  .ferm-table {
-    width: 100%; border-collapse: collapse;
-    font-size: 0.85rem;
-  }
-  .ferm-table th {
-    background: var(--areia);
-    padding: 8px 6px;
-    text-align: center;
-    font-weight: 600; color: var(--terra);
-    font-size: 0.72rem; text-transform: uppercase;
-  }
-  .ferm-table td {
-    padding: 4px;
-    border-bottom: 1px solid var(--areia);
-  }
-  .ferm-table .day-label {
-    text-align: center; font-weight: 600;
-    color: var(--cacao); padding: 6px 8px;
-    font-size: 0.8rem;
-  }
-  .ferm-table input {
-    width: 100%; padding: 8px 6px;
-    border: 1.5px solid var(--areia);
-    border-radius: 6px;
-    font-size: 0.9rem; text-align: center;
-    background: var(--creme);
-    -webkit-appearance: none;
-  }
-  .ferm-table input:focus { outline: none; border-color: var(--ouro); background: white; }
-  .ferm-table tr.today-row td { background: rgba(194,139,58,0.08); }
-  .ferm-table .obs-input { width: 100%; font-size: 0.75rem; }
-
-  /* ── SLIDERS ── */
-  .slider-field { margin-bottom: 18px; }
-  .slider-label {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 8px;
-  }
-  .slider-label span:first-child {
-    font-size: 0.78rem; font-weight: 600;
-    color: var(--terra); text-transform: uppercase; letter-spacing: 0.05em;
-  }
-  .slider-val {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.1rem; font-weight: 700;
-    color: var(--ouro); min-width: 30px; text-align: right;
-  }
-  input[type=range] {
-    width: 100%; height: 6px;
-    -webkit-appearance: none;
-    background: var(--areia);
-    border-radius: 3px; cursor: pointer;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 24px; height: 24px;
-    border-radius: 50%;
-    background: var(--ouro);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-  }
-  .slider-labels {
-    display: flex; justify-content: space-between;
-    font-size: 0.65rem; color: var(--cinza); margin-top: 4px;
-  }
-
-  /* ── CHECKLIST ── */
-  .check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .check-item {
-    display: flex; align-items: center; gap: 8px;
-    padding: 10px 12px;
-    border: 1.5px solid var(--areia);
-    border-radius: 8px;
-    background: var(--creme);
-    cursor: pointer;
-    transition: all 0.15s;
-    font-size: 0.82rem;
-  }
-  .check-item.checked {
-    border-color: var(--verde-claro);
-    background: rgba(74,124,42,0.08);
-    color: var(--verde);
-  }
-  .check-item.defeito.checked {
-    border-color: var(--erro);
-    background: rgba(192,57,43,0.08);
-    color: var(--erro);
-  }
-  .check-item .ci { font-size: 1rem; }
-
-  /* ── IMAGE UPLOAD ── */
-  .img-upload-zone {
-    border: 2px dashed var(--mel);
-    border-radius: var(--r);
-    padding: 24px;
-    text-align: center;
-    background: var(--areia);
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-  }
-  .img-upload-zone:hover, .img-upload-zone.dragover {
-    border-color: var(--ouro);
-    background: rgba(232,184,109,0.1);
-  }
-  .img-upload-zone input[type=file] {
-    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
-  }
-  .img-upload-zone .upload-icon { font-size: 2rem; margin-bottom: 8px; }
-  .img-upload-zone p { font-size: 0.85rem; color: var(--cinza); }
-  .img-preview {
-    margin-top: 12px;
-    border-radius: 8px; overflow: hidden;
-    display: none;
-  }
-  .img-preview img { width: 100%; display: block; border-radius: 8px; }
-  .img-preview .remove-img {
-    margin-top: 8px; font-size: 0.78rem; color: var(--erro);
-    cursor: pointer; text-align: center;
-  }
-
-  /* ── BUTTONS ── */
-  .btn {
-    display: block; width: 100%;
-    padding: 14px;
-    border: none; border-radius: 10px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.95rem; font-weight: 600;
-    cursor: pointer; transition: all 0.2s;
-    text-align: center;
-  }
-  .btn-primary {
-    background: var(--cacao);
-    color: var(--areia);
-  }
-  .btn-primary:active { background: var(--terra); transform: scale(0.98); }
-
-  .btn-secondary {
-    background: var(--areia);
-    color: var(--cacao);
-    border: 1.5px solid var(--mel);
-  }
-  .btn-gold {
-    background: var(--ouro);
-    color: white;
-  }
-  .btn-sm {
-    padding: 9px 16px; font-size: 0.82rem;
-    width: auto; display: inline-block;
-  }
-  .btn-row { display: flex; gap: 10px; margin-top: 6px; }
-  .btn-row .btn { flex: 1; }
-
-  /* ── ETIQUETA / QR ── */
-  #qr-modal {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.6); z-index: 200;
-    align-items: center; justify-content: center;
-    padding: 20px;
-  }
-  #qr-modal.open { display: flex; }
-  .qr-card {
-    background: white; border-radius: 16px;
-    padding: 24px; max-width: 320px; width: 100%;
-    text-align: center;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  }
-  .qr-card h3 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.1rem; margin-bottom: 4px;
-  }
-  .qr-card .qr-lote {
-    font-size: 1.6rem; font-weight: 700;
-    color: var(--cacao); letter-spacing: 0.05em;
-    margin: 10px 0;
-  }
-  .qr-card .qr-data { font-size: 0.8rem; color: var(--cinza); margin-bottom: 14px; }
-  #qr-container { margin: 14px auto; display: flex; justify-content: center; }
-  .qr-print-note { font-size: 0.72rem; color: var(--cinza); margin-top: 12px; }
-
-  /* ── TOAST ── */
-  #toast {
-    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-    background: var(--cacao); color: var(--areia);
-    padding: 12px 22px; border-radius: 30px;
-    font-size: 0.85rem; font-weight: 500;
-    z-index: 300; display: none;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    white-space: nowrap;
-  }
-  #toast.show { display: block; animation: toastIn 0.3s ease; }
-  @keyframes toastIn { from { opacity:0; transform: translateX(-50%) translateY(20px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
-
-  /* ── SECTION DIVIDER ── */
-  .divider {
-    display: flex; align-items: center; gap: 10px;
-    margin: 18px 0 14px;
-  }
-  .divider span {
-    font-size: 0.72rem; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.1em;
-    color: var(--cinza); white-space: nowrap;
-  }
-  .divider::before, .divider::after {
-    content: ''; flex: 1;
-    height: 1px; background: var(--areia);
-  }
-
-  /* ── LOTE DETAIL HEADER ── */
-  .detail-header {
-    display: flex; align-items: center; gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--areia);
-  }
-  .detail-back {
-    width: 38px; height: 38px;
-    border-radius: 50%; border: none;
-    background: var(--areia); color: var(--cacao);
-    font-size: 1.1rem; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .detail-title { flex: 1; }
-  .detail-title h2 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.2rem;
-  }
-  .detail-title p { font-size: 0.78rem; color: var(--cinza); margin-top: 2px; }
-
-  /* ── SENSORIAL HISTORY ── */
-  .sensorial-entry {
-    background: var(--areia);
-    border-radius: 8px;
-    padding: 12px 14px;
-    margin-bottom: 10px;
-    font-size: 0.82rem;
-  }
-  .sensorial-entry .se-date {
-    font-weight: 600; color: var(--terra);
-    font-size: 0.75rem; margin-bottom: 6px;
-  }
-  .sensorial-entry .se-scores {
-    display: flex; gap: 10px; flex-wrap: wrap;
-  }
-  .se-score-item { text-align: center; }
-  .se-score-item .val {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.1rem; font-weight: 700; color: var(--cacao);
-  }
-  .se-score-item .lbl { font-size: 0.65rem; color: var(--cinza); }
-
-  /* ── LOADING ── */
-  .spinner {
-    width: 20px; height: 20px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    display: inline-block; vertical-align: middle;
-    margin-right: 6px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ── EMPTY STATE ── */
-  .empty-state {
-    text-align: center; padding: 48px 20px;
-    color: var(--cinza);
-  }
-  .empty-state .es-icon { font-size: 3rem; margin-bottom: 12px; }
-  .empty-state h3 { font-family: 'Playfair Display', serif; margin-bottom: 6px; color: var(--cacao); }
-  .empty-state p { font-size: 0.85rem; }
-
-  /* ── CONFIG SCREEN ── */
-  .config-item {
-    background: white;
-    border-radius: var(--r);
-    padding: 14px 16px;
-    margin-bottom: 10px;
-    box-shadow: 0 2px 8px var(--sombra);
-  }
-  .config-item label {
-    display: block; font-size: 0.78rem; font-weight: 600;
-    color: var(--terra); margin-bottom: 8px;
-    text-transform: uppercase; letter-spacing: 0.05em;
-  }
-  .config-item input {
-    width: 100%; padding: 10px 12px;
-    border: 1.5px solid var(--areia);
-    border-radius: 8px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
-    background: var(--creme);
-  }
-  .config-item input:focus { outline: none; border-color: var(--ouro); }
-
-  /* ── FERM STATUS BADGE ── */
-  .ferm-dia-hoje {
-    background: var(--ouro);
-    color: white;
-    font-size: 0.68rem;
-    padding: 2px 7px;
-    border-radius: 10px;
-    margin-left: 6px;
-    font-weight: 600;
-  }
-
-  /* ── DELETE BUTTON ── */
-  .lote-card-actions {
-    display: flex; gap: 8px; margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid var(--areia);
-  }
-  .btn-delete {
-    padding: 6px 12px;
-    border: 1.5px solid var(--erro);
-    border-radius: 20px;
-    background: transparent;
-    color: var(--erro);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.72rem; font-weight: 600;
-    cursor: pointer; transition: all 0.15s;
-  }
-  .btn-delete:active { background: var(--erro); color: white; }
-
-  /* ── CONFIRM MODAL ── */
-  #confirm-modal {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.65); z-index: 210;
-    align-items: flex-end; justify-content: center;
-    padding: 20px;
-  }
-  #confirm-modal.open { display: flex; }
-  .confirm-card {
-    background: white; border-radius: 20px 20px 16px 16px;
-    padding: 28px 24px 24px;
-    width: 100%; max-width: 420px;
-    animation: slideUp 0.25s ease;
-  }
-  @keyframes slideUp { from { transform: translateY(60px); opacity:0; } to { transform: none; opacity:1; } }
-  .confirm-card h3 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.1rem; margin-bottom: 8px; color: var(--cacao);
-  }
-  .confirm-card p { font-size: 0.88rem; color: var(--cinza); margin-bottom: 20px; line-height: 1.5; }
-  .confirm-btns { display: flex; gap: 10px; }
-  .btn-confirm-del {
-    flex:1; padding:13px; border:none; border-radius:10px;
-    background: var(--erro); color: white;
-    font-family:'DM Sans',sans-serif; font-size:0.9rem; font-weight:600;
-    cursor:pointer;
-  }
-  .btn-confirm-cancel {
-    flex:1; padding:13px; border: 1.5px solid var(--areia); border-radius:10px;
-    background: var(--creme); color: var(--cacao);
-    font-family:'DM Sans',sans-serif; font-size:0.9rem;
-    cursor:pointer;
-  }
-
-  /* ── CHAT SCREEN ── */
-  #screen-chat {
-    display: none;
-    flex-direction: column;
-    height: calc(100vh - 120px);
-    padding: 0;
-  }
-  #screen-chat.active { display: flex; }
-
-  .chat-api-banner {
-    background: var(--areia);
-    border-radius: var(--r);
-    padding: 12px 14px;
-    margin: 14px 16px 0;
-    font-size: 0.78rem; color: var(--cinza);
-    display: flex; align-items: center; gap: 10px;
-    flex-shrink: 0;
-  }
-  .chat-api-banner.configured {
-    background: rgba(45,80,22,0.1);
-    color: var(--verde);
-  }
-  .chat-api-banner a {
-    color: var(--ouro); text-decoration: underline; cursor: pointer;
-    white-space: nowrap; flex-shrink: 0;
-  }
-
-  .chat-messages {
-    flex: 1; overflow-y: auto;
-    padding: 14px 16px;
-    display: flex; flex-direction: column; gap: 12px;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .msg {
-    max-width: 88%; animation: msgIn 0.2s ease;
-  }
-  @keyframes msgIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform:none; } }
-  .msg.user { align-self: flex-end; }
-  .msg.ai    { align-self: flex-start; }
-  .msg.system { align-self: center; max-width: 100%; }
-
-  .msg-bubble {
-    padding: 11px 14px;
-    border-radius: 18px;
-    font-size: 0.9rem; line-height: 1.55;
-    white-space: pre-wrap; word-break: break-word;
-  }
-  .msg.user .msg-bubble {
-    background: var(--cacao); color: var(--areia);
-    border-bottom-right-radius: 4px;
-  }
-  .msg.ai .msg-bubble {
-    background: white; color: var(--cacao);
-    border-bottom-left-radius: 4px;
-    box-shadow: 0 2px 8px var(--sombra);
-  }
-  .msg.system .msg-bubble {
-    background: var(--areia); color: var(--cinza);
-    font-size: 0.75rem; text-align: center; padding: 8px 16px;
-    border-radius: 20px;
-  }
-  .msg-time {
-    font-size: 0.65rem; color: var(--cinza);
-    margin-top: 4px; padding: 0 4px;
-  }
-  .msg.user .msg-time { text-align: right; }
-
-  /* Typing dots */
-  .typing-dots span {
-    display: inline-block; width: 7px; height: 7px;
-    border-radius: 50%; background: var(--cinza);
-    margin: 0 2px;
-    animation: dot 1.2s infinite;
-  }
-  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes dot { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
-
-  /* Chat input bar */
-  .chat-input-bar {
-    display: flex; align-items: flex-end; gap: 8px;
-    padding: 12px 16px 16px;
-    background: white;
-    border-top: 1px solid var(--areia);
-    flex-shrink: 0;
-  }
-  .chat-input-wrap {
-    flex: 1; position: relative;
-  }
-  #chat-input {
-    width: 100%;
-    padding: 11px 14px;
-    border: 1.5px solid var(--areia);
-    border-radius: 22px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.95rem;
-    background: var(--creme);
-    color: var(--cacao);
-    resize: none;
-    max-height: 120px;
-    line-height: 1.4;
-    transition: border-color 0.2s;
-  }
-  #chat-input:focus { outline: none; border-color: var(--ouro); background: white; }
-
-  .chat-btn {
-    width: 44px; height: 44px; border-radius: 50%;
-    border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem; flex-shrink: 0;
-    transition: all 0.15s;
-  }
-  .chat-btn-send { background: var(--cacao); color: var(--areia); }
-  .chat-btn-send:active { transform: scale(0.9); }
-  .chat-btn-send:disabled { background: var(--areia); color: var(--cinza); cursor: not-allowed; }
-
-  .chat-btn-voice { background: var(--areia); color: var(--cacao); }
-  .chat-btn-voice.listening {
-    background: var(--erro); color: white;
-    animation: pulse-voice 1s infinite;
-  }
-  @keyframes pulse-voice {
-    0%,100% { box-shadow: 0 0 0 0 rgba(192,57,43,0.4); }
-    50%      { box-shadow: 0 0 0 10px rgba(192,57,43,0); }
-  }
-
-  .chat-voice-hint {
-    font-size: 0.7rem; color: var(--cinza);
-    text-align: center; padding: 4px 0 0;
-    flex-basis: 100%;
-  }
-
-  /* Chat suggestions */
-  .chat-suggestions {
-    display: flex; gap: 8px; overflow-x: auto;
-    padding: 0 16px 10px;
-    flex-shrink: 0;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .chat-suggestions::-webkit-scrollbar { display: none; }
-  .suggestion-chip {
-    flex-shrink: 0;
-    padding: 7px 14px;
-    border: 1.5px solid var(--mel);
-    border-radius: 20px;
-    background: var(--creme);
-    color: var(--terra);
-    font-size: 0.75rem; font-weight: 500;
-    cursor: pointer; white-space: nowrap;
-    transition: all 0.15s;
-  }
-  .suggestion-chip:active { background: var(--mel); }
-
-  /* Chat context lote badge */
-  .chat-lote-ctx {
-    display: flex; align-items: center; gap: 8px;
-    padding: 8px 16px;
-    background: rgba(194,139,58,0.1);
-    font-size: 0.75rem; color: var(--terra);
-    flex-shrink: 0;
-  }
-  .chat-lote-ctx strong { color: var(--cacao); }
-  .chat-lote-ctx button {
-    margin-left: auto; border: none; background: none;
-    font-size: 0.7rem; color: var(--cinza); cursor: pointer;
-  }
-
-  @media print {
-    body { background: white; padding: 0; }
-    header, .nav-tabs, #toast { display: none !important; }
-    .qr-card { box-shadow: none; border: 1px solid #ccc; }
-  }
-</style>
+    @media print {
+      .tabs, header, .status-bar, .btn, .edit-only { display: none !important; }
+      .content { padding: 0; }
+      .card { box-shadow: none; border: 1px solid #000; }
+    }
+  </style>
 </head>
 <body>
 
-<!-- HEADER -->
+<div class="view-mode-header">👀 MODO VISUALIZAÇÃO</div>
+
 <header>
-  <h1>☽ Cacaueiro</h1>
-  <p>Controle de Beneficiamento de Cacau</p>
+  <h1>🍫 Cacau Pro</h1>
 </header>
 
-<!-- NAV -->
-<div class="nav-tabs" id="navTabs">
-  <button class="tab-btn active" onclick="showScreen('lotes')">🌱 Lotes</button>
-  <button class="tab-btn" onclick="showScreen('novo')">＋ Novo Lote</button>
-  <button class="tab-btn" onclick="showScreen('chat')">🤖 IA</button>
-  <button class="tab-btn" onclick="showScreen('config')">⚙ Config</button>
+<div class="status-bar">
+  <span><span class="dot" id="status-dot"></span> <span id="status-text">Conectando...</span></span>
+  <span id="sync-time"></span>
 </div>
 
-<!-- MAIN -->
-<main>
-
-  <!-- ===== SCREEN: LOTES ===== -->
-  <div class="screen active" id="screen-lotes">
-    <div class="lotes-header">
-      <h2>Lotes Ativos</h2>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-secondary btn-sm" onclick="sincronizarAgora()" title="Sincronizar com banco">🔄</button>
-        <button class="btn btn-gold btn-sm" onclick="showScreen('novo')">+ Novo</button>
-      </div>
-    </div>
-    <div id="lotes-list">
-      <div class="empty-state">
-        <div class="es-icon">🍫</div>
-        <h3>Nenhum lote ainda</h3>
-        <p>Toque em "Novo Lote" para começar o registro de um lote de cacau.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== SCREEN: NOVO LOTE ===== -->
-  <div class="screen" id="screen-novo">
-    <div class="form-section">
-      <div class="section-header open" onclick="toggleSection(this)">
-        <h3><span class="step-icon">1</span> Identificação do Lote</h3>
-        <span class="chevron">▾</span>
-      </div>
-      <div class="section-body open" style="padding-bottom:20px">
-        <div class="field">
-          <label>Número do Lote *</label>
-          <input type="text" id="n-lote" placeholder="Ex: LOT-2024-001">
-        </div>
-        <div class="field">
-          <label>Referência / Descrição</label>
-          <input type="text" id="n-ref" placeholder="Ex: Fazenda Boa Vista – Téo">
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label>Data da Quebra *</label>
-            <input type="date" id="n-data-quebra">
-          </div>
-          <div class="field">
-            <label>Caixas de Fruta</label>
-            <input type="number" id="n-caixas" placeholder="qtd">
-          </div>
-        </div>
-        <div class="field">
-          <label>Tipo de Origem</label>
-          <div class="radio-group" id="n-tipo">
-            <button class="radio-btn selected" data-val="Fazenda" onclick="selectRadio(this,'n-tipo')">Fazenda</button>
-            <button class="radio-btn" data-val="Parceiro" onclick="selectRadio(this,'n-tipo')">Parceiro</button>
-            <button class="radio-btn" data-val="Terceiro" onclick="selectRadio(this,'n-tipo')">Terceiro</button>
-          </div>
-        </div>
-        <div class="field">
-          <label>Tipo de Fermentação</label>
-          <div class="radio-group" id="n-tipo-ferm">
-            <button class="radio-btn selected" data-val="Padrão" onclick="selectRadio(this,'n-tipo-ferm')">Padrão</button>
-            <button class="radio-btn" data-val="Bombona" onclick="selectRadio(this,'n-tipo-ferm')">Bombona</button>
-          </div>
-        </div>
-        <div class="field">
-          <label>Data de Entrada na Fermentação</label>
-          <input type="date" id="n-entrada-ferm">
-        </div>
-        <button class="btn btn-primary" style="margin-top:8px" onclick="criarLote()">
-          Criar Lote e Iniciar Registro
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== SCREEN: DETALHE LOTE ===== -->
-  <div class="screen" id="screen-detalhe">
-
-    <div class="detail-header">
-      <button class="detail-back" onclick="showScreen('lotes')">←</button>
-      <div class="detail-title">
-        <h2 id="d-lote-titulo">LOT-001</h2>
-        <p id="d-lote-sub">Carregando...</p>
-      </div>
-      <button class="btn btn-gold btn-sm" onclick="gerarEtiqueta()">🏷 Etiqueta</button>
-    </div>
-
-    <!-- ETAPA 2: FERMENTAÇÃO -->
-    <div class="form-section" id="sec-ferm">
-      <div class="section-header" onclick="toggleSection(this)">
-        <h3><span class="step-icon" id="icon-ferm">2</span> Fermentação</h3>
-        <span class="chevron">▾</span>
-      </div>
-      <div class="section-body">
-        <p style="font-size:0.8rem;color:var(--cinza);margin-bottom:14px;">
-          Preencha as temperaturas do dia atual. Volte a cada dia para completar.
-        </p>
-        <div class="ferm-table-wrap">
-          <table class="ferm-table">
-            <thead>
-              <tr>
-                <th>Dia</th>
-                <th>T1 (°C)</th>
-                <th>T2 (°C)</th>
-                <th>T3 (°C)</th>
-                <th>Obs.</th>
-              </tr>
-            </thead>
-            <tbody id="ferm-tbody"></tbody>
-          </table>
-        </div>
-        <div class="field" style="margin-top:16px">
-          <label>Data de Saída da Fermentação</label>
-          <input type="date" id="d-saida-ferm">
-        </div>
-        <button class="btn btn-primary" style="margin-top:4px" onclick="salvarFermentacao()">
-          💾 Salvar Fermentação
-        </button>
-      </div>
-    </div>
-
-    <!-- ETAPA 3: SECAGEM -->
-    <div class="form-section" id="sec-sec">
-      <div class="section-header" onclick="toggleSection(this)">
-        <h3><span class="step-icon" id="icon-sec">3</span> Secagem</h3>
-        <span class="chevron">▾</span>
-      </div>
-      <div class="section-body">
-        <div class="field-row">
-          <div class="field">
-            <label>Entrada na Estufa</label>
-            <input type="date" id="d-entrada-estufa">
-          </div>
-          <div class="field">
-            <label>Saída da Estufa</label>
-            <input type="date" id="d-saida-estufa">
-          </div>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label>Umidade Final (%)</label>
-            <input type="number" id="d-umidade" step="0.1" placeholder="7.5">
-          </div>
-          <div class="field">
-            <label>Peso Seco (kg)</label>
-            <input type="number" id="d-peso" step="0.1" placeholder="120">
-          </div>
-        </div>
-        <div class="field">
-          <label>Tipo de Depósito</label>
-          <div class="radio-group" id="d-deposito">
-            <button class="radio-btn selected" data-val="Fino" onclick="selectRadio(this,'d-deposito')">Fino</button>
-            <button class="radio-btn" data-val="Comum" onclick="selectRadio(this,'d-deposito')">Comum</button>
-          </div>
-        </div>
-        <button class="btn btn-primary" style="margin-top:8px" onclick="salvarSecagem()">
-          💾 Salvar Secagem
-        </button>
-      </div>
-    </div>
-
-    <!-- ETAPA 4: TESTE DE CORTE -->
-    <div class="form-section" id="sec-corte">
-      <div class="section-header" onclick="toggleSection(this)">
-        <h3><span class="step-icon" id="icon-corte">4</span> Teste de Corte</h3>
-        <span class="chevron">▾</span>
-      </div>
-      <div class="section-body">
-        <div class="field">
-          <label>Data do Teste</label>
-          <input type="date" id="d-data-corte">
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label>Fermentação Total (%)</label>
-            <input type="number" id="d-ferm-total" min="0" max="100" placeholder="75">
-          </div>
-          <div class="field">
-            <label>Fermentação Parcial (%)</label>
-            <input type="number" id="d-ferm-parcial" min="0" max="100" placeholder="15">
-          </div>
-        </div>
-
-        <div class="divider"><span>Foto da Tábua de Corte</span></div>
-
-        <div class="img-upload-zone" id="upload-zone" onclick="document.getElementById('foto-corte').click()">
-          <input type="file" id="foto-corte" accept="image/*" capture="environment" onchange="previewImagem(this)" style="display:none">
-          <div class="upload-icon">📸</div>
-          <p>Toque para fotografar ou escolher da galeria</p>
-        </div>
-        <div class="img-preview" id="img-preview">
-          <img id="img-preview-img" src="" alt="Preview">
-          <p class="remove-img" onclick="removerImagem()">✕ Remover foto</p>
-        </div>
-
-        <button class="btn btn-primary" style="margin-top:16px" onclick="salvarCorte()">
-          💾 Salvar Teste de Corte
-        </button>
-      </div>
-    </div>
-
-    <!-- ETAPA 5: ANÁLISE SENSORIAL (múltiplas) -->
-    <div class="form-section" id="sec-sens">
-      <div class="section-header" onclick="toggleSection(this)">
-        <h3><span class="step-icon" id="icon-sens">5</span> Análise Sensorial</h3>
-        <span class="chevron">▾</span>
-      </div>
-      <div class="section-body">
-
-        <!-- Histórico de análises -->
-        <div id="sens-historico" style="margin-bottom:16px"></div>
-
-        <div class="divider"><span>Nova Análise</span></div>
-
-        <div class="field">
-          <label>Data da Análise</label>
-          <input type="date" id="d-data-sens">
-        </div>
-        <div class="field">
-          <label>Responsável</label>
-          <input type="text" id="d-resp-sens" placeholder="Nome do avaliador">
-        </div>
-
-        <div class="divider"><span>Atributos (0 = ausente · 5 = intenso/defeito)</span></div>
-
-        <div class="slider-field">
-          <div class="slider-label">
-            <span>Acidez</span>
-            <span class="slider-val" id="val-acidez">0</span>
-          </div>
-          <input type="range" min="0" max="5" step="1" value="0" id="sl-acidez"
-            oninput="document.getElementById('val-acidez').textContent=this.value">
-          <div class="slider-labels"><span>0 Ausente</span><span>5 Muito forte</span></div>
-        </div>
-
-        <div class="slider-field">
-          <div class="slider-label">
-            <span>Amargor</span>
-            <span class="slider-val" id="val-amargor">0</span>
-          </div>
-          <input type="range" min="0" max="5" step="1" value="0" id="sl-amargor"
-            oninput="document.getElementById('val-amargor').textContent=this.value">
-          <div class="slider-labels"><span>0 Ausente</span><span>5 Muito forte</span></div>
-        </div>
-
-        <div class="slider-field">
-          <div class="slider-label">
-            <span>Adstringência</span>
-            <span class="slider-val" id="val-adstr">0</span>
-          </div>
-          <input type="range" min="0" max="5" step="1" value="0" id="sl-adstr"
-            oninput="document.getElementById('val-adstr').textContent=this.value">
-          <div class="slider-labels"><span>0 Ausente</span><span>5 Muito forte</span></div>
-        </div>
-
-        <div class="divider"><span>Notas de Sabor Positivas</span></div>
-        <div class="check-grid" id="notas-sabor">
-          <div class="check-item" onclick="toggleCheck(this)"><span class="ci">🍫</span> Chocolate</div>
-          <div class="check-item" onclick="toggleCheck(this)"><span class="ci">🌸</span> Floral</div>
-          <div class="check-item" onclick="toggleCheck(this)"><span class="ci">🍓</span> Frutado</div>
-          <div class="check-item" onclick="toggleCheck(this)"><span class="ci">🌰</span> Amêndoas</div>
-          <div class="check-item" onclick="toggleCheck(this)"><span class="ci">🍯</span> Mel/Caramelo</div>
-          <div class="check-item" onclick="toggleCheck(this)"><span class="ci">🌿</span> Herbal</div>
-          <div class="check-item" onclick="toggleCheck(this)"><span class="ci">🍋</span> Cítrico</div>
-          <div class="check-item" onclick="toggleCheck(this)"><span class="ci">🌰</span> Terroso</div>
-        </div>
-
-        <div class="divider"><span>Defeitos / Off-notes</span></div>
-        <div class="check-grid" id="notas-defeito">
-          <div class="check-item defeito" onclick="toggleCheck(this)"><span class="ci">🍄</span> Mofo</div>
-          <div class="check-item defeito" onclick="toggleCheck(this)"><span class="ci">💨</span> Fumaça</div>
-          <div class="check-item defeito" onclick="toggleCheck(this)"><span class="ci">⚠️</span> Off-note</div>
-          <div class="check-item defeito" onclick="toggleCheck(this)"><span class="ci">🫣</span> Putrefação</div>
-        </div>
-
-        <div class="field" style="margin-top:16px">
-          <label>Observações</label>
-          <textarea id="d-obs-sens" placeholder="Notas livres sobre esta análise..."></textarea>
-        </div>
-
-        <button class="btn btn-primary" style="margin-top:4px" onclick="salvarSensorial()">
-          💾 Salvar Esta Análise
-        </button>
-        <p style="font-size:0.75rem;color:var(--cinza);margin-top:8px;text-align:center;">
-          Você pode adicionar novas análises sensoriais a qualquer momento (ex: após ajuste de acidez).
-        </p>
-      </div>
-    </div>
-
-    <!-- OBSERVAÇÕES GERAIS -->
-    <div class="form-section">
-      <div class="section-header" onclick="toggleSection(this)">
-        <h3><span class="step-icon">📝</span> Observações Gerais</h3>
-        <span class="chevron">▾</span>
-      </div>
-      <div class="section-body">
-        <div class="field">
-          <textarea id="d-obs-geral" placeholder="Observações gerais sobre o lote..." rows="4"></textarea>
-        </div>
-        <button class="btn btn-secondary" onclick="salvarObsGeral()">Salvar Observações</button>
-      </div>
-    </div>
-
-  </div><!-- /screen-detalhe -->
-
-  <!-- ===== SCREEN: CONFIG ===== -->
-  <div class="screen" id="screen-config">
-    <h2 style="font-family:'Playfair Display',serif;margin-bottom:16px">Configurações</h2>
-
-    <!-- STATUS SUPABASE -->
-    <div id="sb-status" style="display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--areia);border-radius:var(--r);margin-bottom:14px;font-size:0.8rem;"></div>
-
-    <!-- SUPABASE -->
-    <div style="background:white;border-radius:var(--r);overflow:hidden;margin-bottom:14px;box-shadow:0 2px 8px var(--sombra)">
-      <div style="background:var(--cacao);padding:12px 16px;color:var(--areia);">
-        <strong style="font-family:'Playfair Display',serif;">☁️ Supabase — Banco de Dados</strong>
-        <p style="font-size:0.72rem;color:var(--mel);margin-top:2px;">Permite acessar seus lotes em qualquer dispositivo</p>
-      </div>
-      <div style="padding:16px">
-        <div class="config-item" style="box-shadow:none;padding:0;margin-bottom:14px">
-          <label>URL do Projeto Supabase</label>
-          <input type="url" id="cfg-sb-url" placeholder="https://xxxxxxxxxxx.supabase.co" oninput="salvarConfig()">
-        </div>
-        <div class="config-item" style="box-shadow:none;padding:0;margin-bottom:14px">
-          <label>Chave Anon/Public (anon key)</label>
-          <input type="password" id="cfg-sb-key" placeholder="eyJhbGciOiJIUzI1NiIs..." oninput="salvarConfig()">
-        </div>
-        <div style="display:flex;gap:10px">
-          <button class="btn btn-gold btn-sm" onclick="testarSupabase()">🔌 Testar conexão</button>
-          <button class="btn btn-secondary btn-sm" onclick="sincronizarAgora()">🔄 Sincronizar agora</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="config-item">
-      <label>🤖 Chave API Claude (Anthropic)</label>
-      <input type="password" id="cfg-claude-key" placeholder="sk-ant-api03-..." oninput="salvarConfig()">
-      <p style="font-size:0.72rem;color:var(--cinza);margin-top:6px;">
-        Obtenha sua chave em <strong>console.anthropic.com</strong> → API Keys. A chave fica salva somente neste dispositivo.
-      </p>
-    </div>
-
-    <div class="config-item">
-      <label>URL do Google Apps Script</label>
-      <input type="url" id="cfg-gas-url" placeholder="https://script.google.com/macros/s/..." 
-        oninput="salvarConfig()">
-      <p style="font-size:0.72rem;color:var(--cinza);margin-top:6px;">
-        Cole aqui a URL de implantação do seu Web App no Google Apps Script.
-      </p>
-    </div>
-
-    <div class="config-item">
-      <label>Nome da Fazenda / Produtor</label>
-      <input type="text" id="cfg-fazenda" placeholder="Ex: Fazenda Boa Vista" oninput="salvarConfig()">
-    </div>
-
-    <div style="margin-top:20px;padding:14px;background:var(--areia);border-radius:var(--r)">
-      <p style="font-size:0.78rem;color:var(--cinza);">
-        <strong style="color:var(--cacao)">📌 Como configurar o backend Google Sheets:</strong><br><br>
-        1. Abra o Google Sheets e crie uma planilha nova.<br>
-        2. Vá em <em>Extensões → Apps Script</em> e cole o código <strong>cacau_backend.gs</strong>.<br>
-        3. Clique em <em>Implantar → Novo deployment</em> como Web App.<br>
-        4. Em "Quem tem acesso" escolha <em>Qualquer pessoa</em>.<br>
-        5. Copie a URL gerada e cole no campo acima.
-      </p>
-    </div>
-
-    <button class="btn btn-secondary" style="margin-top:16px" onclick="testarConexao()">
-      🔌 Testar Conexão com Planilha
-    </button>
-  </div>
-
-  <!-- ===== SCREEN: CHAT IA ===== -->
-  <div class="screen" id="screen-chat">
-
-    <!-- API banner -->
-    <div class="chat-api-banner" id="chat-api-banner">
-      <span>🔑</span>
-      <span>Configure sua chave da API Claude na aba <strong>⚙ Config</strong> para usar o assistente.</span>
-      <a onclick="showScreen('config')">Configurar</a>
-    </div>
-
-    <!-- Contexto do lote ativo no chat -->
-    <div class="chat-lote-ctx" id="chat-lote-ctx" style="display:none">
-      <span>📦 Contexto:</span>
-      <strong id="chat-ctx-label">—</strong>
-      <button onclick="limparContextoChat()">✕ remover</button>
-    </div>
-
-    <!-- Sugestões rápidas -->
-    <div class="chat-suggestions" id="chat-suggestions">
-      <div class="suggestion-chip" onclick="enviarSugestao(this)">Como interpretar a fermentação?</div>
-      <div class="suggestion-chip" onclick="enviarSugestao(this)">Qual umidade ideal na secagem?</div>
-      <div class="suggestion-chip" onclick="enviarSugestao(this)">O que causa amargor excessivo?</div>
-      <div class="suggestion-chip" onclick="enviarSugestao(this)">Como reduzir a acidez no armazenamento?</div>
-      <div class="suggestion-chip" onclick="enviarSugestao(this)">Interpretar resultados do teste de corte</div>
-    </div>
-
-    <!-- Mensagens -->
-    <div class="chat-messages" id="chat-messages">
-      <div class="msg system">
-        <div class="msg-bubble">
-          👋 Olá! Sou seu assistente especializado em cacau e pós-colheita. Posso analisar os dados dos seus lotes e responder dúvidas sobre fermentação, secagem e qualidade. Cole sua chave API Claude na aba Config para começar.
-        </div>
-      </div>
-    </div>
-
-    <!-- Input bar -->
-    <div style="flex-shrink:0">
-      <div class="chat-input-bar">
-        <button class="chat-btn chat-btn-voice" id="voice-btn" onclick="toggleVoz()" title="Gravar por voz">🎙</button>
-        <div class="chat-input-wrap">
-          <textarea id="chat-input" placeholder="Digite sua dúvida sobre cacau..." rows="1"
-            oninput="autoResizeTextarea(this)"
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarChat();}"></textarea>
-        </div>
-        <button class="chat-btn chat-btn-send" id="chat-send-btn" onclick="enviarChat()" title="Enviar">➤</button>
-      </div>
-      <div class="chat-voice-hint" id="voice-hint" style="display:none">🔴 Gravando… toque novamente para parar</div>
-    </div>
-
-  </div><!-- /screen-chat -->
-
-</main>
-
-<!-- CONFIRM DELETE MODAL -->
-<div id="confirm-modal">
-  <div class="confirm-card">
-    <h3>Excluir lote?</h3>
-    <p id="confirm-msg">Esta ação não pode ser desfeita. Todos os dados de fermentação, secagem, análises e fotos deste lote serão removidos do dispositivo.</p>
-    <div class="confirm-btns">
-      <button class="btn-confirm-cancel" onclick="fecharConfirm()">Cancelar</button>
-      <button class="btn-confirm-del" onclick="executarExclusao()">🗑 Excluir</button>
-    </div>
-  </div>
+<div class="tabs edit-only">
+  <button class="tab-btn active" onclick="showTab('lotes')">📋 Lotes</button>
+  <button class="tab-btn" onclick="showTab('novo')">➕ Novo</button>
+  <button class="tab-btn" onclick="showTab('etiq')">🏷️ Etiq.</button>
 </div>
-<div id="qr-modal">
-  <div class="qr-card">
-    <p style="font-size:0.72rem;color:var(--cinza);text-transform:uppercase;letter-spacing:0.08em">Etiqueta de Lote</p>
-    <h3 id="qr-fazenda">Cacaueiro</h3>
-    <div class="qr-lote" id="qr-lote-num">---</div>
-    <div class="qr-data" id="qr-lote-info">---</div>
-    <div id="qr-container"></div>
-    <p class="qr-print-note">Escaneie para acessar os dados do lote</p>
-    <div class="btn-row" style="margin-top:14px">
-      <button class="btn btn-primary btn-sm" onclick="imprimirEtiqueta()">🖨 Imprimir</button>
-      <button class="btn btn-secondary btn-sm" onclick="fecharQR()">Fechar</button>
+
+<div class="content">
+  <!-- ABA: LISTA DE LOTES -->
+  <div id="tab-lotes" class="tab-pane active">
+    <div class="form-group edit-only">
+      <input type="text" id="search" placeholder="🔍 Buscar lote..." oninput="renderLotes()" />
+    </div>
+    <div id="lotes-list"></div>
+  </div>
+
+  <!-- ABA: NOVO LOTE -->
+  <div id="tab-novo" class="tab-pane">
+    <div class="card">
+      <div class="card-title">🌱 Registrar Lote</div>
+      <div class="form-group"><label>Número do Lote *</label><input type="text" id="nl-numero" placeholder="Ex: LOTE-2025-001"></div>
+      <div class="form-group"><label>Referência</label><input type="text" id="nl-ref" placeholder="Variedade, Local..."></div>
+      <div class="form-group">
+        <label>Tipo de Fermentação *</label>
+        <select id="nl-tipo">
+          <option value="Tradicional">Tradicional (até 8 dias)</option>
+          <option value="Bombona">Bombona (até 15 dias)</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Data de Quebra</label><input type="date" id="nl-data"></div>
+      <button class="btn btn-primary" onclick="criarLote()">✅ Criar Lote</button>
+    </div>
+  </div>
+
+  <!-- ABA: ETIQUETA -->
+  <div id="tab-etiq" class="tab-pane">
+    <div class="card">
+      <div class="card-title">🏷️ Gerar QR Code</div>
+      <div class="form-group">
+        <select id="etiq-select" onchange="gerarQR()"><option value="">Selecione um lote...</option></select>
+      </div>
+      <div id="qr-area" style="text-align:center; display:none;">
+        <div id="qrcode" style="display:inline-block; padding:10px; background:#fff; border:1px solid #ddd;"></div>
+        <p style="margin-top:10px; font-weight:bold;" id="qr-label"></p>
+        <button class="btn btn-outline" onclick="window.print()" style="margin-top:15px;">🖨️ Imprimir Etiqueta</button>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- TOAST -->
+<a href="#" id="edit-link" class="floating-edit">✏️</a>
+
 <div id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════
-let lotes = JSON.parse(localStorage.getItem('cacau_lotes') || '[]');
-let loteAtual = null;
-let fotoBase64 = null;
-let gasUrl = '';
+  // ⚠️ COLOQUE SUA URL DO GOOGLE SCRIPT AQUI
+  const BACKEND_URL = "https://script.google.com/macros/s/AKfycbz_V_m7z7_p7_p7_p7_p7_p7_p7_p7_p7_p7/exec"; 
+  
+  let lotes = [];
+  let isViewOnly = false;
 
-// ── Supabase helpers ──────────────────────────
-function getSbCfg() {
-  return {
-    url: https://muumbdwxzojitsvtbeqr.supabase.co/rest/v1/('cacau_sb_url') || '',
-    key: sb_publishable_tZWydD0QkfhpxhbhyaHiXQ_phxobH-F('cacau_sb_key') || ''
-  };
-}
-
-function sbHeaders() {
-  const { key } = getSbCfg();
-  return {
-    'Content-Type': 'application/json',
-    'apikey': key,
-    'Authorization': 'Bearer ' + key,
-    'Prefer': 'return=representation'
-  };
-}
-
-function sbReady() {
-  const { url, key } = getSbCfg();
-  return !!(url && key);
-}
-
-// Upsert um lote inteiro (insert ou update baseado no id)
-async function sbSalvarLote(lote) {
-  if (!sbReady()) return;
-  const { url } = getSbCfg();
-  try {
-    await fetch(`${url}/rest/v1/lotes?on_conflict=id`, {
-      method: 'POST',
-      headers: { ...sbHeaders(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify({
-        id: lote.id,
-        numero: lote.numero,
-        dados: lote   // guardamos o objeto inteiro em JSONB
-      })
-    });
-  } catch(e) { console.warn('Supabase save error:', e); }
-}
-
-// Buscar todos os lotes do banco
-async function sbCarregarLotes() {
-  if (!sbReady()) return null;
-  const { url } = getSbCfg();
-  try {
-    const res = await fetch(`${url}/rest/v1/lotes?select=dados&order=criado_em.desc`, {
-      headers: sbHeaders()
-    });
-    if (!res.ok) return null;
-    const rows = await res.json();
-    return rows.map(r => r.dados);
-  } catch(e) { return null; }
-}
-
-// Excluir lote do banco
-async function sbExcluirLote(id) {
-  if (!sbReady()) return;
-  const { url } = getSbCfg();
-  try {
-    await fetch(`${url}/rest/v1/lotes?id=eq.${id}`, {
-      method: 'DELETE',
-      headers: sbHeaders()
-    });
-  } catch(e) { console.warn('Supabase delete error:', e); }
-}
-
-// ─────────────────────────────────────────────
-function salvarTudo() {
-  localStorage.setItem('cacau_lotes', JSON.stringify(lotes));
-}
-
-// Salva localmente + envia pro Supabase
-async function salvarLoteCompleto(lote) {
-  salvarTudo();
-  await sbSalvarLote(lote);
-}
-
-function salvarConfig() {
-  gasUrl = document.getElementById('cfg-gas-url').value;
-  localStorage.setItem('cacau_gas_url', gasUrl);
-  localStorage.setItem('cacau_fazenda', document.getElementById('cfg-fazenda').value);
-  const key = document.getElementById('cfg-claude-key').value.trim();
-  if (key) localStorage.setItem('cacau_claude_key', key);
-  localStorage.setItem('cacau_sb_url', document.getElementById('cfg-sb-url').value.trim());
-  localStorage.setItem('cacau_sb_key', document.getElementById('cfg-sb-key').value.trim());
-  atualizarStatusSb();
-}
-
-function carregarConfig() {
-  gasUrl = localStorage.getItem('cacau_gas_url') || '';
-  document.getElementById('cfg-gas-url').value = gasUrl;
-  document.getElementById('cfg-fazenda').value = localStorage.getItem('cacau_fazenda') || '';
-  const key = localStorage.getItem('cacau_claude_key') || '';
-  if (key) document.getElementById('cfg-claude-key').value = key;
-  document.getElementById('cfg-sb-url').value = localStorage.getItem('cacau_sb_url') || '';
-  document.getElementById('cfg-sb-key').value = localStorage.getItem('cacau_sb_key') || '';
-  atualizarStatusSb();
-}
-
-function atualizarStatusSb() {
-  const el = document.getElementById('sb-status');
-  if (!el) return;
-  if (sbReady()) {
-    el.style.display = 'flex';
-    el.innerHTML = `<span style="color:var(--sucesso)">✅ Supabase configurado — dados sincronizando entre dispositivos.</span>`;
-  } else {
-    el.style.display = 'flex';
-    el.innerHTML = `<span style="color:var(--cinza)">⚠️ Supabase não configurado. Dados salvos só neste dispositivo.</span>`;
-  }
-}
-
-// ═══════════════════════════════════════════════
-//  NAVIGATION
-// ═══════════════════════════════════════════════
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + id).classList.add('active');
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  const map = { lotes: 0, novo: 1, chat: 2, config: 3 };
-  if (map[id] !== undefined) document.querySelectorAll('.tab-btn')[map[id]].classList.add('active');
-  window.scrollTo(0, 0);
-  if (id === 'chat') atualizarBannerAPI();
-}
-
-function toggleSection(header) {
-  header.classList.toggle('open');
-  header.nextElementSibling.classList.toggle('open');
-}
-
-function selectRadio(btn, groupId) {
-  document.querySelectorAll(`#${groupId} .radio-btn`).forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-}
-
-function getRadioVal(groupId) {
-  const sel = document.querySelector(`#${groupId} .radio-btn.selected`);
-  return sel ? sel.dataset.val : '';
-}
-
-function toggleCheck(el) {
-  el.classList.toggle('checked');
-}
-
-// ═══════════════════════════════════════════════
-//  RENDER LOTES LIST
-// ═══════════════════════════════════════════════
-function renderLotes() {
-  const container = document.getElementById('lotes-list');
-  if (!lotes.length) {
-    container.innerHTML = `<div class="empty-state"><div class="es-icon">🍫</div><h3>Nenhum lote ainda</h3><p>Toque em "+ Novo" para registrar seu primeiro lote.</p></div>`;
-    return;
-  }
-
-  // Sort by creation date desc
-  const sorted = [...lotes].sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm));
-
-  container.innerHTML = sorted.map(l => {
-    const steps = [
-      { label: 'Lote', done: true },
-      { label: 'Ferm.', done: !!(l.fermentacao && l.fermentacao.saida) },
-      { label: 'Secagem', done: !!(l.secagem && l.secagem.saida) },
-      { label: 'Corte', done: !!(l.corte && l.corte.total !== undefined) },
-      { label: 'Sensorial', done: !!(l.sensoriais && l.sensoriais.length > 0) },
-    ];
-    const pills = steps.map(s =>
-      `<span class="step-pill ${s.done ? 'done' : 'pending'}">${s.label}</span>`
-    ).join('');
-
-    // Check if today is a fermentation day
-    let fermDia = '';
-    if (l.fermentacao && l.entradaFerm && !l.fermentacao.saida) {
-      const entrada = new Date(l.entradaFerm);
-      const hoje = new Date();
-      const diff = Math.floor((hoje - entrada) / 86400000) + 1;
-      if (diff >= 1 && diff <= 15) fermDia = `<span style="font-size:0.7rem;color:var(--ouro);">📅 Dia ${diff} de fermentação</span>`;
+  // INICIALIZAÇÃO
+  window.onload = async () => {
+    document.getElementById('nl-data').value = new Date().toISOString().split('T')[0];
+    
+    // Verificar se é modo visualização (URL tem ?lote=...)
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('lote')) {
+      isViewOnly = true;
+      document.body.classList.add('view-only');
+      const loteNum = params.get('lote');
+      document.getElementById('edit-link').href = window.location.pathname;
+      document.getElementById('search').value = loteNum;
     }
 
-    return `
-      <div class="lote-card" onclick="abrirLote('${l.id}')">
-        <div class="lote-num">${l.numero}</div>
-        <div class="lote-ref">${l.referencia || '—'} · ${l.tipo || ''} · Quebra: ${formatDate(l.dataQuebra)}</div>
-        ${fermDia ? `<div style="margin-top:4px">${fermDia}</div>` : ''}
-        <div class="lote-status">${pills}</div>
-        <div class="lote-card-actions" onclick="event.stopPropagation()">
-          <button class="btn-delete" onclick="confirmarExclusao('${l.id}','${l.numero}')">🗑 Excluir lote</button>
-        </div>
-      </div>`;
-  }).join('');
-}
-
-function formatDate(d) {
-  if (!d) return '—';
-  const p = d.split('-');
-  return `${p[2]}/${p[1]}/${p[0]}`;
-}
-
-// ═══════════════════════════════════════════════
-//  CRIAR LOTE
-// ═══════════════════════════════════════════════
-async function criarLote() {
-  const numero = document.getElementById('n-lote').value.trim();
-  const ref = document.getElementById('n-ref').value.trim();
-  const dataQuebra = document.getElementById('n-data-quebra').value;
-  const caixas = document.getElementById('n-caixas').value;
-  const tipo = getRadioVal('n-tipo');
-  const tipoFerm = getRadioVal('n-tipo-ferm');
-  const entradaFerm = document.getElementById('n-entrada-ferm').value;
-
-  if (!numero || !dataQuebra) {
-    toast('⚠️ Preencha o Número do Lote e a Data de Quebra');
-    return;
-  }
-
-  if (lotes.find(l => l.numero === numero)) {
-    toast('⚠️ Já existe um lote com este número');
-    return;
-  }
-
-  const lote = {
-    id: 'L' + Date.now(),
-    numero,
-    referencia: ref,
-    dataQuebra,
-    caixas,
-    tipo,
-    tipoFerm,
-    entradaFerm: entradaFerm || dataQuebra,
-    criadoEm: new Date().toISOString(),
-    fermentacao: { dias: {} },
-    secagem: {},
-    corte: {},
-    sensoriais: [],
-    obsGeral: ''
+    await carregarDados();
   };
 
-  lotes.push(lote);
-  await salvarLoteCompleto(lote);
-  enviarGAS('novoLote', lote);
-
-  // Reset form
-  document.getElementById('n-lote').value = '';
-  document.getElementById('n-ref').value = '';
-  document.getElementById('n-data-quebra').value = '';
-  document.getElementById('n-caixas').value = '';
-  document.getElementById('n-entrada-ferm').value = '';
-
-  renderLotes();
-  abrirLote(lote.id);
-  toast('✅ Lote ' + numero + ' criado!');
-}
-
-// ═══════════════════════════════════════════════
-//  ABRIR LOTE (DETALHE)
-// ═══════════════════════════════════════════════
-function abrirLote(id) {
-  loteAtual = lotes.find(l => l.id === id);
-  if (!loteAtual) return;
-
-  document.getElementById('d-lote-titulo').textContent = loteAtual.numero;
-  document.getElementById('d-lote-sub').textContent =
-    `${loteAtual.referencia || '—'} · Quebra: ${formatDate(loteAtual.dataQuebra)}`;
-
-  // Build fermentacao table
-  buildFermTable();
-
-  // Load secagem
-  const sec = loteAtual.secagem || {};
-  document.getElementById('d-entrada-estufa').value = sec.entrada || '';
-  document.getElementById('d-saida-estufa').value = sec.saida || '';
-  document.getElementById('d-umidade').value = sec.umidade || '';
-  document.getElementById('d-peso').value = sec.peso || '';
-  if (sec.deposito) {
-    document.querySelectorAll('#d-deposito .radio-btn').forEach(b => {
-      b.classList.toggle('selected', b.dataset.val === sec.deposito);
-    });
+  async function carregarDados() {
+    atualizarStatus("Sincronizando...", "offline");
+    try {
+      const resp = await fetch(`${BACKEND_URL}?action=getLotes`);
+      const data = await resp.json();
+      if (data.lotes) {
+        lotes = data.lotes;
+        localStorage.setItem('cacau_lotes', JSON.stringify(lotes));
+        atualizarStatus("Conectado (Nuvem)", "online");
+        document.getElementById('sync-time').textContent = new Date().toLocaleTimeString();
+      }
+    } catch (e) {
+      console.error(e);
+      lotes = JSON.parse(localStorage.getItem('cacau_lotes') || '[]');
+      atualizarStatus("Offline (Dados Locais)", "offline");
+    }
+    renderLotes();
+    popularSelect();
+    
+    if (isViewOnly) {
+      const params = new URLSearchParams(window.location.search);
+      abrirLote(params.get('lote'));
+    }
   }
 
-  // Load corte
-  const corte = loteAtual.corte || {};
-  document.getElementById('d-data-corte').value = corte.data || '';
-  document.getElementById('d-ferm-total').value = corte.total || '';
-  document.getElementById('d-ferm-parcial').value = corte.parcial || '';
-  fotoBase64 = corte.fotoBase64 || null;
-  if (fotoBase64) {
-    document.getElementById('img-preview-img').src = fotoBase64;
-    document.getElementById('img-preview').style.display = 'block';
-  } else {
-    document.getElementById('img-preview').style.display = 'none';
+  function atualizarStatus(txt, classe) {
+    const dot = document.getElementById('status-dot');
+    dot.className = 'dot ' + classe;
+    document.getElementById('status-text').textContent = txt;
   }
 
-  // Load sensorial historico
-  renderSensorialHistorico();
-
-  // Reset sensorial form
-  resetSensorialForm();
-
-  // Obs geral
-  document.getElementById('d-obs-geral').value = loteAtual.obsGeral || '';
-
-  // Update step icons
-  updateStepIcons();
-
-  showScreen('detalhe');
-}
-
-function buildFermTable() {
-  const tbody = document.getElementById('ferm-tbody');
-  const entrada = loteAtual.entradaFerm ? new Date(loteAtual.entradaFerm) : new Date();
-  const hoje = new Date();
-  hoje.setHours(0,0,0,0);
-  const dias = loteAtual.fermentacao?.dias || {};
-
-  let html = '';
-  for (let i = 1; i <= 15; i++) {
-    const diaDate = new Date(entrada);
-    diaDate.setDate(diaDate.getDate() + (i - 1));
-    diaDate.setHours(0,0,0,0);
-    const isHoje = diaDate.getTime() === hoje.getTime();
-    const isFuturo = diaDate > hoje;
-    const d = dias[i] || {};
-    const hojeLabel = isHoje ? '<span class="ferm-dia-hoje">Hoje</span>' : '';
-
-    html += `<tr class="${isHoje ? 'today-row' : ''}">
-      <td class="day-label">${i}${hojeLabel}<br><span style="font-size:0.65rem;color:var(--cinza)">${diaDate.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}</span></td>
-      <td><input type="number" step="0.1" placeholder="—" value="${d.t1||''}" id="ft${i}_t1" ${isFuturo?'disabled':''}></td>
-      <td><input type="number" step="0.1" placeholder="—" value="${d.t2||''}" id="ft${i}_t2" ${isFuturo?'disabled':''}></td>
-      <td><input type="number" step="0.1" placeholder="—" value="${d.t3||''}" id="ft${i}_t3" ${isFuturo?'disabled':''}></td>
-      <td><input type="text" placeholder="—" value="${d.obs||''}" id="ft${i}_obs" class="obs-input" ${isFuturo?'disabled':''}></td>
-    </tr>`;
-  }
-  tbody.innerHTML = html;
-
-  // Load saida
-  document.getElementById('d-saida-ferm').value = loteAtual.fermentacao?.saida || '';
-}
-
-function updateStepIcons() {
-  const f = loteAtual.fermentacao;
-  const s = loteAtual.secagem;
-  const c = loteAtual.corte;
-  const se = loteAtual.sensoriais;
-
-  function setIcon(id, done) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.classList.toggle('done', done);
-    el.textContent = done ? '✓' : el.textContent;
-  }
-  setIcon('icon-ferm', !!(f && f.saida));
-  setIcon('icon-sec', !!(s && s.saida));
-  setIcon('icon-corte', !!(c && c.data));
-  setIcon('icon-sens', !!(se && se.length > 0));
-}
-
-// ═══════════════════════════════════════════════
-//  SALVAR FERMENTAÇÃO
-// ═══════════════════════════════════════════════
-async function salvarFermentacao() {
-  if (!loteAtual) return;
-  const dias = {};
-  for (let i = 1; i <= 15; i++) {
-    const t1 = document.getElementById(`ft${i}_t1`)?.value;
-    const t2 = document.getElementById(`ft${i}_t2`)?.value;
-    const t3 = document.getElementById(`ft${i}_t3`)?.value;
-    const obs = document.getElementById(`ft${i}_obs`)?.value;
-    if (t1 || t2 || t3 || obs) dias[i] = { t1, t2, t3, obs };
-  }
-  loteAtual.fermentacao = {
-    ...loteAtual.fermentacao,
-    dias,
-    saida: document.getElementById('d-saida-ferm').value
-  };
-  await salvarLoteCompleto(loteAtual);
-  updateStepIcons();
-  enviarGAS('salvarFermentacao', { loteId: loteAtual.id, loteNum: loteAtual.numero, fermentacao: loteAtual.fermentacao });
-  toast('✅ Fermentação salva!');
-}
-
-// ═══════════════════════════════════════════════
-//  SALVAR SECAGEM
-// ═══════════════════════════════════════════════
-async function salvarSecagem() {
-  if (!loteAtual) return;
-  loteAtual.secagem = {
-    entrada: document.getElementById('d-entrada-estufa').value,
-    saida: document.getElementById('d-saida-estufa').value,
-    umidade: document.getElementById('d-umidade').value,
-    peso: document.getElementById('d-peso').value,
-    deposito: getRadioVal('d-deposito')
-  };
-  await salvarLoteCompleto(loteAtual);
-  updateStepIcons();
-  enviarGAS('salvarSecagem', { loteId: loteAtual.id, loteNum: loteAtual.numero, secagem: loteAtual.secagem });
-  toast('✅ Secagem salva!');
-}
-
-// ═══════════════════════════════════════════════
-//  IMAGEM
-// ═══════════════════════════════════════════════
-function previewImagem(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    fotoBase64 = e.target.result;
-    document.getElementById('img-preview-img').src = fotoBase64;
-    document.getElementById('img-preview').style.display = 'block';
-  };
-  reader.readAsDataURL(file);
-}
-
-function removerImagem() {
-  fotoBase64 = null;
-  document.getElementById('img-preview').style.display = 'none';
-  document.getElementById('foto-corte').value = '';
-}
-
-// ═══════════════════════════════════════════════
-//  SALVAR CORTE
-// ═══════════════════════════════════════════════
-async function salvarCorte() {
-  if (!loteAtual) return;
-  const data = document.getElementById('d-data-corte').value;
-  if (!data) { toast('⚠️ Informe a data do teste'); return; }
-
-  loteAtual.corte = {
-    data,
-    total: document.getElementById('d-ferm-total').value,
-    parcial: document.getElementById('d-ferm-parcial').value,
-    fotoBase64
-  };
-  await salvarLoteCompleto(loteAtual);
-  updateStepIcons();
-
-  const payload = { loteId: loteAtual.id, loteNum: loteAtual.numero, corte: { ...loteAtual.corte, fotoBase64: null }, fotoBase64 };
-  enviarGAS('salvarCorte', payload);
-  toast('✅ Teste de corte salvo!');
-}
-
-// ═══════════════════════════════════════════════
-//  SALVAR SENSORIAL
-// ═══════════════════════════════════════════════
-function resetSensorialForm() {
-  document.getElementById('d-data-sens').value = new Date().toISOString().slice(0,10);
-  document.getElementById('d-resp-sens').value = '';
-  document.getElementById('sl-acidez').value = 0;
-  document.getElementById('sl-amargor').value = 0;
-  document.getElementById('sl-adstr').value = 0;
-  document.getElementById('val-acidez').textContent = '0';
-  document.getElementById('val-amargor').textContent = '0';
-  document.getElementById('val-adstr').textContent = '0';
-  document.querySelectorAll('#notas-sabor .check-item').forEach(c => c.classList.remove('checked'));
-  document.querySelectorAll('#notas-defeito .check-item').forEach(c => c.classList.remove('checked'));
-  document.getElementById('d-obs-sens').value = '';
-}
-
-function renderSensorialHistorico() {
-  const container = document.getElementById('sens-historico');
-  const lista = loteAtual.sensoriais || [];
-  if (!lista.length) {
-    container.innerHTML = `<p style="font-size:0.8rem;color:var(--cinza);">Nenhuma análise sensorial registrada ainda.</p>`;
-    return;
-  }
-  container.innerHTML = lista.map((s, i) => `
-    <div class="sensorial-entry">
-      <div class="se-date">Análise ${i+1} — ${formatDate(s.data)} · ${s.responsavel || '—'}</div>
-      <div class="se-scores">
-        <div class="se-score-item"><div class="val">${s.acidez}</div><div class="lbl">Acidez</div></div>
-        <div class="se-score-item"><div class="val">${s.amargor}</div><div class="lbl">Amargor</div></div>
-        <div class="se-score-item"><div class="val">${s.adstringencia}</div><div class="lbl">Adstringência</div></div>
-      </div>
-      ${s.sabores?.length ? `<div style="margin-top:6px;font-size:0.75rem;color:var(--verde-claro);">✓ ${s.sabores.join(', ')}</div>` : ''}
-      ${s.defeitos?.length ? `<div style="margin-top:4px;font-size:0.75rem;color:var(--erro);">⚠ ${s.defeitos.join(', ')}</div>` : ''}
-      ${s.obs ? `<div style="margin-top:4px;font-size:0.75rem;color:var(--cinza);">${s.obs}</div>` : ''}
-    </div>
-  `).join('');
-}
-
-async function salvarSensorial() {
-  if (!loteAtual) return;
-  const data = document.getElementById('d-data-sens').value;
-  if (!data) { toast('⚠️ Informe a data da análise'); return; }
-
-  const sabores = [...document.querySelectorAll('#notas-sabor .check-item.checked')].map(c => c.textContent.trim());
-  const defeitos = [...document.querySelectorAll('#notas-defeito .check-item.checked')].map(c => c.textContent.trim());
-
-  const analise = {
-    id: 'S' + Date.now(),
-    data,
-    responsavel: document.getElementById('d-resp-sens').value,
-    acidez: parseInt(document.getElementById('sl-acidez').value),
-    amargor: parseInt(document.getElementById('sl-amargor').value),
-    adstringencia: parseInt(document.getElementById('sl-adstr').value),
-    sabores,
-    defeitos,
-    obs: document.getElementById('d-obs-sens').value,
-    timestamp: new Date().toISOString()
-  };
-
-  if (!loteAtual.sensoriais) loteAtual.sensoriais = [];
-  loteAtual.sensoriais.push(analise);
-  await salvarLoteCompleto(loteAtual);
-  updateStepIcons();
-  renderSensorialHistorico();
-  resetSensorialForm();
-  enviarGAS('salvarSensorial', { loteId: loteAtual.id, loteNum: loteAtual.numero, analise });
-  toast('✅ Análise sensorial registrada!');
-}
-
-// ═══════════════════════════════════════════════
-//  OBS GERAL
-// ═══════════════════════════════════════════════
-async function salvarObsGeral() {
-  if (!loteAtual) return;
-  loteAtual.obsGeral = document.getElementById('d-obs-geral').value;
-  await salvarLoteCompleto(loteAtual);
-  enviarGAS('salvarObs', { loteId: loteAtual.id, loteNum: loteAtual.numero, obs: loteAtual.obsGeral });
-  toast('✅ Observações salvas!');
-}
-
-// ═══════════════════════════════════════════════
-//  QR CODE / ETIQUETA
-// ═══════════════════════════════════════════════
-function gerarEtiqueta() {
-  if (!loteAtual) return;
-  const fazenda = localStorage.getItem('cacau_fazenda') || 'Cacaueiro';
-  document.getElementById('qr-fazenda').textContent = fazenda;
-  document.getElementById('qr-lote-num').textContent = loteAtual.numero;
-  document.getElementById('qr-lote-info').textContent =
-    `${loteAtual.referencia || '—'} · Quebra: ${formatDate(loteAtual.dataQuebra)}`;
-
-  const container = document.getElementById('qr-container');
-  container.innerHTML = '';
-  const url = `${window.location.href}#${loteAtual.id}`;
-  new QRCode(container, { text: url, width: 150, height: 150, colorDark: '#3B1F0A', colorLight: '#FBF6EC' });
-
-  document.getElementById('qr-modal').classList.add('open');
-}
-
-function fecharQR() {
-  document.getElementById('qr-modal').classList.remove('open');
-}
-
-function imprimirEtiqueta() {
-  window.print();
-}
-
-// ═══════════════════════════════════════════════
-//  BACKEND: GOOGLE APPS SCRIPT
-// ═══════════════════════════════════════════════
-async function enviarGAS(acao, dados) {
-  const url = localStorage.getItem('cacau_gas_url');
-  if (!url) return; // silently skip if not configured
-
-  try {
-    const payload = { acao, ...dados };
-    await fetch(url, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-  } catch (e) {
-    console.warn('GAS sync failed:', e);
-  }
-}
-
-async function testarConexao() {
-  const url = document.getElementById('cfg-gas-url').value;
-  if (!url) { toast('⚠️ Cole a URL do Apps Script primeiro'); return; }
-  try {
-    const res = await fetch(url + '?acao=ping');
-    if (res.ok) { toast('✅ Conexão bem-sucedida!'); }
-    else { toast('⚠️ Servidor respondeu com erro ' + res.status); }
-  } catch (e) {
-    toast('✅ Requisição enviada (modo CORS restrito é normal)');
-  }
-}
-
-// ═══════════════════════════════════════════════
-//  TOAST
-// ═══════════════════════════════════════════════
-let toastTimer;
-function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
-}
-
-// ═══════════════════════════════════════════════
-//  EXCLUIR LOTE
-// ═══════════════════════════════════════════════
-let loteParaExcluir = null;
-
-function confirmarExclusao(id, numero) {
-  loteParaExcluir = id;
-  document.getElementById('confirm-msg').textContent =
-    `Isso vai apagar permanentemente o lote "${numero}" e todos os seus dados (fermentação, secagem, análises). Esta ação não pode ser desfeita.`;
-  document.getElementById('confirm-modal').classList.add('open');
-}
-
-function fecharConfirm() {
-  loteParaExcluir = null;
-  document.getElementById('confirm-modal').classList.remove('open');
-}
-
-async function executarExclusao() {
-  if (!loteParaExcluir) return;
-  await sbExcluirLote(loteParaExcluir);
-  lotes = lotes.filter(l => l.id !== loteParaExcluir);
-  salvarTudo();
-  fecharConfirm();
-  renderLotes();
-  toast('🗑 Lote excluído.');
-}
-
-// ═══════════════════════════════════════════════
-//  CHAT IA
-// ═══════════════════════════════════════════════
-let chatHistory = [];
-let chatContextLote = null;
-let recognition = null;
-let isListening = false;
-
-function atualizarBannerAPI() {
-  const key = localStorage.getItem('cacau_claude_key');
-  const banner = document.getElementById('chat-api-banner');
-  if (key) {
-    banner.className = 'chat-api-banner configured';
-    banner.innerHTML = `<span>✅</span><span>API Claude configurada e pronta para uso.</span>`;
-  } else {
-    banner.className = 'chat-api-banner';
-    banner.innerHTML = `<span>🔑</span><span>Configure sua chave API Claude na aba <strong>⚙ Config</strong>.</span><a onclick="showScreen('config')">Configurar</a>`;
-  }
-}
-
-function autoResizeTextarea(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
-}
-
-function scrollChatBottom() {
-  const el = document.getElementById('chat-messages');
-  el.scrollTop = el.scrollHeight;
-}
-
-function addMsg(role, text) {
-  const container = document.getElementById('chat-messages');
-  const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  const div = document.createElement('div');
-  div.className = `msg ${role}`;
-  div.innerHTML = `
-    <div class="msg-bubble">${text.replace(/\n/g,'<br>')}</div>
-    <div class="msg-time">${time}</div>`;
-  container.appendChild(div);
-  scrollChatBottom();
-  return div;
-}
-
-function addTyping() {
-  const container = document.getElementById('chat-messages');
-  const div = document.createElement('div');
-  div.className = 'msg ai';
-  div.id = 'typing-indicator';
-  div.innerHTML = `<div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
-  container.appendChild(div);
-  scrollChatBottom();
-}
-
-function removeTyping() {
-  const el = document.getElementById('typing-indicator');
-  if (el) el.remove();
-}
-
-function construirContextoLote() {
-  if (!chatContextLote) return '';
-  const l = chatContextLote;
-  let ctx = `\n\n--- DADOS DO LOTE ATUAL (${l.numero}) ---\n`;
-  ctx += `Referência: ${l.referencia || '—'}\nTipo: ${l.tipo}\nData quebra: ${l.dataQuebra}\nEntrada fermentação: ${l.entradaFerm}\n`;
-  if (l.fermentacao?.dias && Object.keys(l.fermentacao.dias).length) {
-    ctx += '\nRegistros de fermentação:\n';
-    Object.entries(l.fermentacao.dias).forEach(([dia, d]) => {
-      ctx += `  Dia ${dia}: T1=${d.t1||'—'}°C T2=${d.t2||'—'}°C T3=${d.t3||'—'}°C ${d.obs?'Obs:'+d.obs:''}\n`;
-    });
-    if (l.fermentacao.saida) ctx += `  Saída: ${l.fermentacao.saida}\n`;
-  }
-  if (l.secagem?.entrada) {
-    const s = l.secagem;
-    ctx += `\nSecagem: entrada ${s.entrada}, saída ${s.saida||'—'}, umidade ${s.umidade||'—'}%, peso seco ${s.peso||'—'}kg, depósito ${s.deposito||'—'}\n`;
-  }
-  if (l.corte?.data) {
-    ctx += `\nTeste de corte (${l.corte.data}): fermentação total ${l.corte.total||'—'}%, parcial ${l.corte.parcial||'—'}%\n`;
-  }
-  if (l.sensoriais?.length) {
-    ctx += '\nAnálises sensoriais:\n';
-    l.sensoriais.forEach((s, i) => {
-      ctx += `  Análise ${i+1} (${s.data}): Acidez ${s.acidez}/5, Amargor ${s.amargor}/5, Adstringência ${s.adstringencia}/5`;
-      if (s.sabores?.length) ctx += `, Sabores: ${s.sabores.join(', ')}`;
-      if (s.defeitos?.length) ctx += `, Defeitos: ${s.defeitos.join(', ')}`;
-      ctx += '\n';
-    });
-  }
-  ctx += '--- FIM DOS DADOS ---\n';
-  return ctx;
-}
-
-async function enviarChat() {
-  const input = document.getElementById('chat-input');
-  const texto = input.value.trim();
-  if (!texto) return;
-
-  const key = localStorage.getItem('cacau_claude_key');
-  if (!key) {
-    addMsg('system', '⚠️ Configure sua chave API na aba ⚙ Config para usar o assistente.');
-    return;
+  function showTab(id) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    event.target.classList.add('active');
   }
 
-  input.value = '';
-  input.style.height = 'auto';
-  addMsg('user', texto);
+  function renderLotes() {
+    const container = document.getElementById('lotes-list');
+    const termo = document.getElementById('search').value.toLowerCase();
+    const filtrados = lotes.filter(l => l.numero.toLowerCase().includes(termo));
 
-  chatHistory.push({ role: 'user', content: texto + construirContextoLote() });
-
-  const sendBtn = document.getElementById('chat-send-btn');
-  sendBtn.disabled = true;
-  addTyping();
-
-  const systemPrompt = `Você é um especialista em cacau fino e pós-colheita, com profundo conhecimento em fermentação, secagem, análise sensorial e beneficiamento de amêndoas de cacau (Theobroma cacao). 
-Você auxilia produtores rurais brasileiros com linguagem clara e prática.
-Quando receber dados de lotes (fermentação, secagem, análises sensoriais), interprete-os e dê recomendações concretas.
-Responda sempre em português brasileiro. Seja objetivo, útil e didático.`;
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages: chatHistory
-      })
-    });
-
-    removeTyping();
-    sendBtn.disabled = false;
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      const msg = err.error?.message || `Erro ${res.status}`;
-      addMsg('system', `⚠️ ${msg}`);
-      chatHistory.pop();
+    if (filtrados.length === 0) {
+      container.innerHTML = '<p style="text-align:center; color:#888; margin-top:20px;">Nenhum lote encontrado.</p>';
       return;
     }
 
-    const data = await res.json();
-    const resposta = data.content?.[0]?.text || '(sem resposta)';
-    chatHistory.push({ role: 'assistant', content: resposta });
-    addMsg('ai', resposta);
+    container.innerHTML = filtrados.map(l => `
+      <div class="lote-item" id="lote-${l.numero}">
+        <div class="lote-header" onclick="toggleLote('${l.numero}')">
+          <div>
+            <h3>${l.numero}</h3>
+            <p>${l.tipo} · ${l.dataQuebra.split('-').reverse().join('/')}</p>
+          </div>
+          <span>▼</span>
+        </div>
+        <div class="lote-details" id="details-${l.numero}">
+          <div class="card">
+            <div class="card-title">🌡️ Fermentação (${l.tipo})</div>
+            <table class="ferm-table">
+              <thead><tr><th>Dia</th><th>T1</th><th>T2</th><th>T3</th></tr></thead>
+              <tbody>
+                ${gerarLinhasFerm(l)}
+              </tbody>
+            </table>
+            <button class="btn btn-primary edit-only" onclick="salvarLote('${l.numero}')" style="margin-top:15px;">💾 Salvar Alterações</button>
+          </div>
+          
+          <div class="card">
+            <div class="card-title">☀️ Secagem</div>
+            <div class="form-group">
+              <label>Umidade (%)</label>
+              <input type="number" value="${l.secagem?.umidade || ''}" onchange="updateVal('${l.numero}', 'secagem.umidade', this.value)">
+            </div>
+            <button class="btn btn-primary edit-only" onclick="salvarLote('${l.numero}')">💾 Salvar</button>
+          </div>
 
-  } catch (e) {
-    removeTyping();
-    sendBtn.disabled = false;
-    addMsg('system', `⚠️ Erro de conexão: ${e.message}`);
-    chatHistory.pop();
-  }
-}
-
-function enviarSugestao(el) {
-  document.getElementById('chat-input').value = el.textContent;
-  enviarChat();
-}
-
-function ativarContextoChat(lote) {
-  chatContextLote = lote;
-  document.getElementById('chat-lote-ctx').style.display = 'flex';
-  document.getElementById('chat-ctx-label').textContent = lote.numero + (lote.referencia ? ' — ' + lote.referencia : '');
-}
-
-function limparContextoChat() {
-  chatContextLote = null;
-  document.getElementById('chat-lote-ctx').style.display = 'none';
-}
-
-// ═══════════════════════════════════════════════
-//  VOZ (Web Speech API)
-// ═══════════════════════════════════════════════
-function toggleVoz() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    toast('⚠️ Reconhecimento de voz não suportado neste navegador');
-    return;
+          <button class="btn btn-danger edit-only" onclick="excluirLote('${l.numero}')" style="margin-top:20px; background:#ff4444;">🗑️ Excluir Lote</button>
+        </div>
+      </div>
+    `).join('');
   }
 
-  if (isListening) {
-    recognition?.stop();
-    return;
-  }
-
-  recognition = new SpeechRecognition();
-  recognition.lang = 'pt-BR';
-  recognition.continuous = false;
-  recognition.interimResults = false;
-
-  recognition.onstart = () => {
-    isListening = true;
-    document.getElementById('voice-btn').classList.add('listening');
-    document.getElementById('voice-hint').style.display = 'block';
-  };
-
-  recognition.onresult = e => {
-    const texto = e.results[0][0].transcript;
-    document.getElementById('chat-input').value = texto;
-    autoResizeTextarea(document.getElementById('chat-input'));
-  };
-
-  recognition.onend = () => {
-    isListening = false;
-    document.getElementById('voice-btn').classList.remove('listening');
-    document.getElementById('voice-hint').style.display = 'none';
-    // Auto-send after voice
-    if (document.getElementById('chat-input').value.trim()) enviarChat();
-  };
-
-  recognition.onerror = e => {
-    isListening = false;
-    document.getElementById('voice-btn').classList.remove('listening');
-    document.getElementById('voice-hint').style.display = 'none';
-    if (e.error !== 'aborted') toast('⚠️ Erro de voz: ' + e.error);
-  };
-
-  recognition.start();
-}
-
-// ═══════════════════════════════════════════════
-// ═══════════════════════════════════════════════
-function handleDeepLink() {
-  const hash = window.location.hash.slice(1);
-  if (hash && hash.startsWith('L')) {
-    const lote = lotes.find(l => l.id === hash);
-    if (lote) abrirLote(lote.id);
-  }
-}
-
-// ═══════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', async () => {
-  carregarConfig();
-
-  // Set default dates to today
-  const hoje = new Date().toISOString().slice(0, 10);
-  document.getElementById('n-data-quebra').value = hoje;
-  document.getElementById('n-entrada-ferm').value = hoje;
-  document.getElementById('d-data-sens').value = hoje;
-
-  // Tenta carregar do Supabase se configurado
-  if (sbReady()) {
-    mostrarSyncStatus('🔄 Sincronizando com banco de dados...');
-    const remoto = await sbCarregarLotes();
-    if (remoto && remoto.length > 0) {
-      // Merge: remoto tem prioridade, mas mantém dados locais que não existem no remoto
-      const localMap = {};
-      lotes.forEach(l => localMap[l.id] = l);
-      remoto.forEach(l => { localMap[l.id] = l; }); // remoto sobrescreve
-      lotes = Object.values(localMap);
-      salvarTudo();
-      mostrarSyncStatus('✅ Sincronizado com sucesso!');
-    } else if (remoto !== null) {
-      // Banco vazio mas conectado — envia locais pro banco
-      for (const l of lotes) await sbSalvarLote(l);
-      mostrarSyncStatus('✅ Dados locais enviados ao banco!');
-    } else {
-      mostrarSyncStatus('⚠️ Não foi possível sincronizar. Usando dados locais.');
+  function gerarLinhasFerm(l) {
+    const dias = l.tipo === 'Tradicional' ? 8 : 15;
+    let html = '';
+    if (!l.fermentacao) l.fermentacao = [];
+    
+    for (let i = 0; i < dias; i++) {
+      const d = l.fermentacao[i] || { t1: '', t2: '', t3: '' };
+      html += `
+        <tr>
+          <td style="text-align:center; font-weight:bold;">${i+1}º</td>
+          <td><input type="number" value="${d.t1}" onchange="updateFerm('${l.numero}', ${i}, 't1', this.value)"></td>
+          <td><input type="number" value="${d.t2}" onchange="updateFerm('${l.numero}', ${i}, 't2', this.value)"></td>
+          <td><input type="number" value="${d.t3}" onchange="updateFerm('${l.numero}', ${i}, 't3', this.value)"></td>
+        </tr>
+      `;
     }
-    setTimeout(() => ocultarSyncStatus(), 3000);
+    return html;
   }
 
-  renderLotes();
-  handleDeepLink();
-});
-
-function mostrarSyncStatus(msg) {
-  let el = document.getElementById('sync-bar');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'sync-bar';
-    el.style.cssText = `
-      position:fixed; top:0; left:0; right:0; z-index:999;
-      background:var(--cacao); color:var(--mel);
-      text-align:center; font-size:0.8rem; padding:8px 16px;
-      font-family:'DM Sans',sans-serif;
-    `;
-    document.body.prepend(el);
+  function toggleLote(num) {
+    const el = document.getElementById('details-' + num);
+    const isOpen = el.classList.contains('open');
+    document.querySelectorAll('.lote-details').forEach(d => d.classList.remove('open'));
+    if (!isOpen) el.classList.add('open');
   }
-  el.textContent = msg;
-  el.style.display = 'block';
-}
 
-function ocultarSyncStatus() {
-  const el = document.getElementById('sync-bar');
-  if (el) el.style.display = 'none';
-}
-
-async function sincronizarAgora() {
-  if (!sbReady()) {
-    toast('⚠️ Configure o Supabase na aba Config primeiro');
-    return;
+  function abrirLote(num) {
+    setTimeout(() => {
+      const el = document.getElementById('details-' + num);
+      if (el) el.classList.add('open');
+    }, 500);
   }
-  mostrarSyncStatus('🔄 Sincronizando...');
-  const remoto = await sbCarregarLotes();
-  if (remoto && remoto.length > 0) {
-    const localMap = {};
-    lotes.forEach(l => localMap[l.id] = l);
-    remoto.forEach(l => { localMap[l.id] = l; });
-    lotes = Object.values(localMap);
-    salvarTudo();
+
+  // AÇÕES
+  async function criarLote() {
+    const num = document.getElementById('nl-numero').value.trim();
+    if (!num) return alert("Digite o número do lote!");
+    
+    const novo = {
+      numero: num,
+      ref: document.getElementById('nl-ref').value,
+      tipo: document.getElementById('nl-tipo').value,
+      dataQuebra: document.getElementById('nl-data').value,
+      fermentacao: [],
+      secagem: {},
+      sensorial: {}
+    };
+
+    lotes.unshift(novo);
+    await salvarLote(num);
+    document.getElementById('nl-numero').value = '';
+    showTab('lotes');
     renderLotes();
-    mostrarSyncStatus('✅ Sincronizado!');
-  } else {
-    mostrarSyncStatus('⚠️ Falha na sincronização');
   }
-  setTimeout(() => ocultarSyncStatus(), 3000);
-}
 
-async function testarSupabase() {
-  const url = document.getElementById('cfg-sb-url').value.trim();
-  const key = document.getElementById('cfg-sb-key').value.trim();
-  if (!url || !key) { toast('⚠️ Preencha URL e Chave do Supabase'); return; }
-  try {
-    const res = await fetch(`${url}/rest/v1/lotes?limit=1`, {
-      headers: { 'apikey': key, 'Authorization': 'Bearer ' + key }
-    });
-    if (res.ok) {
-      toast('✅ Supabase conectado com sucesso!');
-    } else {
-      const err = await res.json().catch(()=>({}));
-      toast('⚠️ Erro: ' + (err.message || res.status));
+  async function salvarLote(num) {
+    const lote = lotes.find(l => l.numero === num);
+    showToast("Salvando na nuvem...");
+    
+    try {
+      await fetch(BACKEND_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify({ action: 'saveLote', lote: lote })
+      });
+      showToast("✅ Salvo com sucesso!");
+      localStorage.setItem('cacau_lotes', JSON.stringify(lotes));
+    } catch (e) {
+      showToast("❌ Erro ao salvar na nuvem");
     }
-  } catch(e) {
-    toast('⚠️ Falha de conexão: ' + e.message);
   }
-}
+
+  async function excluirLote(num) {
+    if (!confirm("Tem certeza que deseja apagar o lote " + num + "?")) return;
+    
+    showToast("Excluindo...");
+    try {
+      await fetch(BACKEND_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify({ action: 'deleteLote', numero: num })
+      });
+      lotes = lotes.filter(l => l.numero !== num);
+      renderLotes();
+      showToast("Lote excluído");
+    } catch (e) {
+      showToast("Erro ao excluir");
+    }
+  }
+
+  // ATUALIZADORES DE DADOS
+  function updateFerm(num, dia, campo, valor) {
+    const l = lotes.find(x => x.numero === num);
+    if (!l.fermentacao[dia]) l.fermentacao[dia] = { t1: '', t2: '', t3: '' };
+    l.fermentacao[dia][campo] = valor;
+  }
+
+  function updateVal(num, path, valor) {
+    const l = lotes.find(x => x.numero === num);
+    const parts = path.split('.');
+    l[parts[0]][parts[1]] = valor;
+  }
+
+  // QR CODE
+  function popularSelect() {
+    const sel = document.getElementById('etiq-select');
+    const val = sel.value;
+    sel.innerHTML = '<option value="">Selecione um lote...</option>' + 
+      lotes.map(l => `<option value="${l.numero}">${l.numero}</option>`).join('');
+    sel.value = val;
+  }
+
+  function gerarQR() {
+    const num = document.getElementById('etiq-select').value;
+    if (!num) {
+      document.getElementById('qr-area').style.display = 'none';
+      return;
+    }
+    
+    document.getElementById('qr-area').style.display = 'block';
+    document.getElementById('qr-label').textContent = "Lote: " + num;
+    
+    const qrDiv = document.getElementById('qrcode');
+    qrDiv.innerHTML = '';
+    
+    // URL de visualização: mesma URL + ?lote=NUMERO
+    const url = window.location.href.split('?')[0] + "?lote=" + encodeURIComponent(num);
+    
+    new QRCode(qrDiv, {
+      text: url,
+      width: 160,
+      height: 160
+    });
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3000);
+  }
 </script>
+
 </body>
 </html>
