@@ -657,6 +657,34 @@ input[type=range]::-webkit-slider-thumb{
   <div class="auth-logo">☽ Cacaueiro</div>
   <div class="auth-tagline">Controle de Beneficiamento de Cacau</div>
 
+  <!-- SETUP — primeira vez, sem URL configurada -->
+  <div class="auth-card" id="auth-setup" style="display:none">
+    <div class="auth-card-title">Configurar banco de dados</div>
+    <div class="auth-card-sub">Para usar o Cacaueiro, você precisa conectar ao seu Google Sheets. Isso é feito uma única vez.</div>
+
+    <div class="auth-error-box" id="setup-error"></div>
+
+    <div style="background:rgba(200,146,58,.08);border:1px solid rgba(200,146,58,.2);border-radius:var(--r-sm);padding:14px;margin-bottom:18px;font-size:.78rem;color:var(--text2);line-height:1.8">
+      <strong style="color:var(--mel);display:block;margin-bottom:6px">📋 Como obter a URL:</strong>
+      <span style="color:var(--ouro);font-weight:600">1.</span> Acesse <strong style="color:var(--areia)">sheets.new</strong> e crie uma planilha<br>
+      <span style="color:var(--ouro);font-weight:600">2.</span> Clique em <em>Extensões → Apps Script</em><br>
+      <span style="color:var(--ouro);font-weight:600">3.</span> Cole o código do arquivo <strong style="color:var(--areia)">cacau_backend.gs</strong><br>
+      <span style="color:var(--ouro);font-weight:600">4.</span> <em>Implantar → Novo deployment → App da Web</em><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;Acesso: <strong style="color:var(--areia)">Qualquer pessoa</strong> → Autorizar<br>
+      <span style="color:var(--ouro);font-weight:600">5.</span> Copie a URL gerada e cole abaixo
+    </div>
+
+    <div class="auth-field">
+      <label>URL do Google Apps Script</label>
+      <input type="url" id="setup-gas-url" placeholder="https://script.google.com/macros/s/..." autocomplete="off">
+    </div>
+
+    <button class="auth-btn" id="setup-btn" onclick="salvarSetup()">
+      <span class="auth-btn-text">✓ Conectar e continuar</span>
+      <span class="auth-spinner"></span>
+    </button>
+  </div>
+
   <!-- LOGIN -->
   <div class="auth-card" id="auth-login">
     <div class="auth-card-title">Entrar</div>
@@ -686,6 +714,9 @@ input[type=range]::-webkit-slider-thumb{
 
     <div class="auth-switch">
       Não tem conta? <a onclick="mostrarTela('registro')">Criar conta</a>
+    </div>
+    <div style="margin-top:12px;text-align:center">
+      <a style="font-size:.72rem;color:var(--text2);cursor:pointer" onclick="mostrarTela('setup')">⚙ Alterar banco de dados</a>
     </div>
   </div>
 
@@ -1045,39 +1076,26 @@ input[type=range]::-webkit-slider-thumb{
 ════════════════════════════════════════ -->
 <div class="screen" id="screen-config">
   <div class="section-title">Configurações</div>
-  <div id="db-status" class="db-status-bar warn">⚠️ Cole a URL do Apps Script abaixo para sincronizar entre dispositivos.</div>
 
-  <div style="background:rgba(200,146,58,.1);border:1px solid rgba(200,146,58,.3);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px;font-size:.8rem;color:var(--mel);">
-    ⚠️ <strong>Importante:</strong> A URL do Apps Script é necessária para criar conta e fazer login. Configure aqui antes de tentar acessar pela primeira vez em um dispositivo novo.
-  </div>
+  <!-- Status da conexão (readonly info) -->
+  <div id="db-status" class="db-status-bar warn" style="margin-bottom:14px"></div>
 
   <div class="cfg-block">
     <div class="cfg-block-head">
-      <strong>📊 Google Sheets — Banco de Dados</strong>
-      <p>Seus dados ficam na sua conta Google, acessíveis em qualquer dispositivo</p>
+      <strong>📊 Banco de Dados — Google Sheets</strong>
+      <p>A conexão é configurada na tela de acesso do app</p>
     </div>
     <div class="cfg-block-body">
-      <div class="cfg-item">
-        <label>URL do Google Apps Script</label>
-        <input type="url" id="cfg-gas-url" placeholder="https://script.google.com/macros/s/..." oninput="salvarConfig()">
-        <p>Siga o passo a passo abaixo para gerar esta URL. É feito uma única vez.</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <span id="cfg-gas-display" style="font-size:.75rem;color:var(--text2);word-break:break-all;flex:1">—</span>
+        <div style="display:flex;gap:8px;flex-shrink:0">
+          <button class="btn btn-secondary btn-sm" onclick="sincronizarAgora()">🔄 Sincronizar</button>
+          <button class="btn btn-ghost btn-sm" onclick="testarConexao()">🔌 Testar</button>
+        </div>
       </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn btn-primary btn-sm" onclick="testarConexao()">🔌 Testar conexão</button>
-        <button class="btn btn-secondary btn-sm" onclick="sincronizarAgora()">🔄 Sincronizar agora</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="cfg-block">
-    <div class="cfg-block-head"><strong>📋 Como configurar em 4 passos</strong></div>
-    <div class="cfg-block-body">
-      <div class="cfg-steps">
-        <p><strong>1.</strong> Acesse <strong>sheets.new</strong> no Google para criar uma planilha nova.</p>
-        <p><strong>2.</strong> Clique em <em>Extensões → Apps Script</em>, apague o conteúdo e cole o código do arquivo <strong>cacau_backend.gs</strong>.</p>
-        <p><strong>3.</strong> Clique em <em>Implantar → Novo deployment → App da Web</em>. Em "Quem pode acessar" escolha <em>Qualquer pessoa</em>. Autorize quando pedir.</p>
-        <p><strong>4.</strong> Copie a URL gerada e cole no campo acima. ✅</p>
-      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:10px;width:100%" onclick="mostrarTrocarUrl()">
+        ✏ Alterar URL do banco de dados
+      </button>
     </div>
   </div>
 
@@ -1101,6 +1119,10 @@ input[type=range]::-webkit-slider-thumb{
       </div>
     </div>
   </div>
+
+  <button class="btn" style="background:rgba(192,57,43,.15);color:#e05a4a;border:1px solid rgba(192,57,43,.3);margin-top:8px" onclick="fazerLogout()">
+    Sair da conta
+  </button>
 </div>
 
 </main>
@@ -1174,7 +1196,7 @@ input[type=range]::-webkit-slider-thumb{
 'use strict';
 
 // ── STATE ────────────────────────────────────────────────────────
-let lotes = JSON.parse(localStorage.getItem('cacau_lotes') || '[]');
+let lotes = [];  // carregado após login
 let loteAtual = null;
 let fotoBase64 = null;
 let loteParaExcluir = null;
@@ -1184,68 +1206,78 @@ let recognition = null;
 let isListening = false;
 let etapaAtiva = 'ferm';
 
+function getLotesKey(){
+  const s = getSessao();
+  return s ? `cacau_lotes_${s.id}` : 'cacau_lotes_anon';
+}
+
 // ── GAS / SYNC ────────────────────────────────────────────────────
-function gasReady(){ return !!(localStorage.getItem('cacau_gas_url')||'').trim(); }
+function getGasUrl(){ return (localStorage.getItem('cacau_gas_url')||'').trim(); }
+function gasReady(){ return !!getGasUrl(); }
 
 async function gasCarregarLotes(){
-  const url = localStorage.getItem('cacau_gas_url')||'';
-  if(!url) return null;
-  const s = getSessao();
-  if(!s) return null;
+  const url = getGasUrl(); if(!url) return null;
+  const s = getSessao();   if(!s)  return null;
   try{
     const r = await fetch(`${url}?acao=lerLotes&userId=${encodeURIComponent(s.id)}&token=${encodeURIComponent(s.token)}`);
     if(!r.ok) return null;
-    const d = await r.json();
-    if(!d.ok) return null;
-    return Array.isArray(d.lotes) ? d.lotes : null;
+    const txt = await r.text();
+    const d = JSON.parse(txt);
+    return (d.ok && Array.isArray(d.lotes)) ? d.lotes : null;
   }catch(e){ return null; }
 }
 
 async function gasSalvarLote(lote){
-  const url = localStorage.getItem('cacau_gas_url')||'';
-  if(!url) return;
+  const url = getGasUrl(); if(!url) return;
   const s = getSessao();
   try{
-    await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({acao:'upsertLote', lote, userId:s?.id||'', token:s?.token||''})});
+    await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({acao:'upsertLote', lote, userId:s?.id||'', token:s?.token||''})
+    });
   }catch(e){}
 }
 
 async function gasExcluirLoteRemoto(id){
-  const url = localStorage.getItem('cacau_gas_url')||'';
-  if(!url) return;
+  const url = getGasUrl(); if(!url) return;
   const s = getSessao();
   try{
-    await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({acao:'excluirLote', id, userId:s?.id||'', token:s?.token||''})});
+    await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({acao:'excluirLote', id, userId:s?.id||'', token:s?.token||''})
+    });
   }catch(e){}
 }
 
-// ── Auth GAS call ─────────────────────────────────────────────────
 async function gasAuth(payload){
-  const url = localStorage.getItem('cacau_gas_url')||'';
-  if(!url) return { ok:false, msg:'Configure a URL do Apps Script na aba ⚙ Config.' };
+  const url = getGasUrl();
+  if(!url) return { ok:false, msg:'URL do banco de dados não configurada.' };
   try{
     const res = await fetch(url, {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'text/plain'},
       body: JSON.stringify(payload)
     });
     if(!res.ok) return { ok:false, msg:'Erro de servidor: '+res.status };
-    return await res.json();
+    const txt = await res.text();
+    try{ return JSON.parse(txt); }
+    catch(e){ return { ok:false, msg:'Resposta inesperada: '+txt.slice(0,100) }; }
   }catch(e){
-    return { ok:false, msg:'Sem conexão com o Apps Script. Verifique a URL na aba Config.' };
+    return { ok:false, msg:'Sem conexão com o servidor. Verifique a URL.' };
   }
 }
 
-function salvarTudo(){ localStorage.setItem('cacau_lotes',JSON.stringify(lotes)); }
+// ÚNICA definição de salvarTudo — usa chave por usuário
+function salvarTudo(){
+  localStorage.setItem(getLotesKey(), JSON.stringify(lotes));
+}
 
 async function salvarLoteCompleto(lote){ salvarTudo(); await gasSalvarLote(lote); }
 
 // ── CONFIG ────────────────────────────────────────────────────────
 function salvarConfig(){
-  const url = document.getElementById('cfg-gas-url').value.trim();
-  localStorage.setItem('cacau_gas_url', url);
   localStorage.setItem('cacau_fazenda', document.getElementById('cfg-fazenda').value);
   const k = document.getElementById('cfg-claude-key').value.trim();
   if(k) localStorage.setItem('cacau_claude_key', k);
@@ -1253,7 +1285,6 @@ function salvarConfig(){
 }
 
 function carregarConfig(){
-  document.getElementById('cfg-gas-url').value = localStorage.getItem('cacau_gas_url')||'';
   document.getElementById('cfg-fazenda').value = localStorage.getItem('cacau_fazenda')||'';
   const k = localStorage.getItem('cacau_claude_key')||'';
   if(k) document.getElementById('cfg-claude-key').value = k;
@@ -1261,15 +1292,26 @@ function carregarConfig(){
 }
 
 function atualizarStatusGas(){
-  const el = document.getElementById('db-status');
+  const el   = document.getElementById('db-status');
+  const disp = document.getElementById('cfg-gas-display');
+  const url  = getGasUrl();
   if(!el) return;
-  if(gasReady()){
+  if(url){
     el.className='db-status-bar ok';
-    el.textContent='✅ Google Sheets conectado — sincronizando entre dispositivos.';
+    el.textContent='✅ Google Sheets conectado.';
+    if(disp) disp.textContent = url.length > 60 ? url.slice(0,57)+'...' : url;
   } else {
     el.className='db-status-bar warn';
-    el.textContent='⚠️ Cole a URL do Apps Script acima para sincronizar entre dispositivos.';
+    el.textContent='⚠️ Banco de dados não configurado.';
+    if(disp) disp.textContent='—';
   }
+}
+
+function mostrarTrocarUrl(){
+  ocultarApp();
+  mostrarTela('setup');
+  const el = document.getElementById('setup-gas-url');
+  if(el) el.value = getGasUrl();
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────────
@@ -2008,14 +2050,17 @@ async function sincronizarAgora(){
 }
 
 async function testarConexao(){
-  const url=document.getElementById('cfg-gas-url').value.trim();
-  if(!url){ toast('⚠️ Cole a URL do Apps Script primeiro'); return; }
+  const url = getGasUrl();
+  if(!url){ toast('⚠️ URL não configurada'); return; }
   mostrarSyncStatus('🔄 Testando...');
   try{
-    const r=await fetch(`${url}?acao=ping`);
-    if(r.ok){ ocultarSyncStatus(); toast('✅ Conectado ao Google Sheets!'); }
-    else { ocultarSyncStatus(); toast('⚠️ Erro '+r.status); }
-  }catch(e){ ocultarSyncStatus(); toast('✅ Apps Script alcançado! Salve e sincronize.'); }
+    const r = await fetch(`${url}?acao=ping`);
+    const txt = await r.text();
+    const d = JSON.parse(txt);
+    ocultarSyncStatus();
+    if(d.ok) toast('✅ Conectado ao Google Sheets!');
+    else toast('⚠️ Resposta inesperada: '+d.msg);
+  }catch(e){ ocultarSyncStatus(); toast('⚠️ Falha: '+e.message); }
 }
 
 // ── DEEP LINK ────────────────────────────────────────────────────
@@ -2148,15 +2193,38 @@ function limparSessao(){
   localStorage.removeItem('cacau_sessao');
 }
 
-// ── Tela: alternar login ↔ registro ──────────────────────────────
+// ── Tela: alternar login ↔ registro ↔ setup ──────────────────────
 function mostrarTela(tela){
+  document.getElementById('auth-setup').style.display    = tela==='setup'    ? 'block' : 'none';
   document.getElementById('auth-login').style.display    = tela==='login'    ? 'block' : 'none';
   document.getElementById('auth-registro').style.display = tela==='registro' ? 'block' : 'none';
-  // Limpa erros
-  ['login-error','login-success','reg-error','reg-success'].forEach(id=>{
+  ['login-error','login-success','reg-error','reg-success','setup-error'].forEach(id=>{
     const el = document.getElementById(id);
     if(el){ el.textContent=''; el.classList.remove('show'); }
   });
+}
+
+async function salvarSetup(){
+  const url = document.getElementById('setup-gas-url').value.trim();
+  if(!url){ authErro('setup','Cole a URL do Apps Script no campo acima.'); return; }
+  if(!url.includes('script.google.com')){
+    authErro('setup','A URL parece inválida. Deve começar com https://script.google.com/...'); return;
+  }
+  setBtnLoading('setup-btn', true);
+  // Testa a conexão
+  try{
+    const r = await fetch(`${url}?acao=ping`);
+    const txt = await r.text();
+    const d = JSON.parse(txt);
+    if(!d.ok){ authErro('setup','Conexão falhou: '+d.msg); setBtnLoading('setup-btn',false); return; }
+  }catch(e){
+    authErro('setup','Não foi possível conectar. Verifique se o deployment está publicado como "Qualquer pessoa".');
+    setBtnLoading('setup-btn',false); return;
+  }
+  localStorage.setItem('cacau_gas_url', url);
+  setBtnLoading('setup-btn',false);
+  mostrarTela('login');
+  toast('✅ Banco de dados conectado!');
 }
 
 // ── Mostrar/ocultar senha ─────────────────────────────────────────
@@ -2256,8 +2324,7 @@ async function fazerRegistro(){
   if(pass.length < 8)   return authErro('reg','A senha precisa ter pelo menos 8 caracteres.');
   if(pass !== pass2)    return authErro('reg','As senhas não coincidem.');
 
-  const url = localStorage.getItem('cacau_gas_url')||'';
-  if(!url) return authErro('reg','Configure a URL do Apps Script na aba ⚙ Config antes de criar conta.');
+  if(!gasReady()) return authErro('reg','Banco de dados não configurado. Volte e configure a URL.');
 
   setBtnLoading('reg-btn', true);
   const senhaHash = await hashSimples(pass);
@@ -2282,8 +2349,7 @@ async function fazerLogin(){
   if(!email) return authErro('login','Informe seu e-mail.');
   if(!pass)  return authErro('login','Informe sua senha.');
 
-  const url = localStorage.getItem('cacau_gas_url')||'';
-  if(!url) return authErro('login','Configure a URL do Apps Script na aba ⚙ Config primeiro.');
+  if(!gasReady()) return authErro('login','Banco de dados não configurado. Toque em "Alterar banco de dados".');
 
   setBtnLoading('login-btn', true);
   const senhaHash = await hashSimples(pass);
@@ -2318,17 +2384,16 @@ function fazerLogout(){
 
 // ── Mostrar/ocultar app ───────────────────────────────────────────
 function entrarNoApp(){
-  const s = sessaoAtual;
-  // Avatar: iniciais do nome
+  const s = sessaoAtual || getSessao();
+  if(!s){ ocultarApp(); return; }
+  sessaoAtual = s;
+
   const iniciais = (s.nome||'?').split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
   document.getElementById('user-avatar').textContent       = iniciais;
   document.getElementById('user-display-name').textContent = s.nome.split(' ')[0];
 
-  // Lotes são por usuário — namespace no localStorage
-  const chaveLocal = `cacau_lotes_${s.id}`;
-  lotes = JSON.parse(localStorage.getItem(chaveLocal) || '[]');
-  // Sobrescreve a chave padrão para que salvarTudo() use a correta
-  window._lotesKey = chaveLocal;
+  // Carrega lotes do namespace correto para este usuário
+  lotes = JSON.parse(localStorage.getItem(getLotesKey()) || '[]');
 
   document.getElementById('auth-overlay').classList.add('hidden');
   document.getElementById('app-root').style.display = 'flex';
@@ -2362,13 +2427,6 @@ async function hashSimples(txt){
   return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-// ─── Sobrescrever salvarTudo para usar chave por usuário ──────────
-// (a função original é redefinida aqui — última definição vence em JS)
-function salvarTudo(){
-  const key = window._lotesKey || 'cacau_lotes';
-  localStorage.setItem(key, JSON.stringify(lotes));
-}
-
 // ── Fechar popover ao clicar fora ─────────────────────────────────
 document.addEventListener('click', e=>{
   const pop = document.getElementById('logout-popover');
@@ -2380,7 +2438,7 @@ document.addEventListener('click', e=>{
 });
 
 // ═══════════════════════════════════════════════════════════════
-//  INIT MODIFICADO — verifica sessão antes de mostrar app
+//  INIT
 // ═══════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', async ()=>{
   carregarConfig();
@@ -2389,39 +2447,42 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('n-entrada-ferm').value = hoje;
   document.getElementById('d-data-sens').value    = hoje;
 
-  // Verifica sessão salva
-  const s = getSessao();
-  if(s){
-    sessaoAtual = s;
-    entrarNoApp();
+  // 1. Sem URL configurada → mostrar tela de setup (configurar banco)
+  if(!gasReady()){
+    mostrarTela('setup');
+    return;
+  }
 
-    // Sync com GAS após login automático
-    if(gasReady()){
-      mostrarSyncStatus('🔄 Carregando dados...');
-      document.getElementById('sync-btn').classList.add('spinning');
-      const remoto = await gasCarregarLotes();
-      if(remoto !== null){
-        const map = {};
-        lotes.forEach(l=>map[l.id]=l);
-        remoto.forEach(l=>{ map[l.id]=l; });
-        lotes = Object.values(map);
-        salvarTudo();
-        mostrarSyncStatus('✅ Dados carregados!');
-      } else if(lotes.length){
-        mostrarSyncStatus('📤 Enviando dados locais...');
-        for(const l of lotes) await gasSalvarLote(l);
-        mostrarSyncStatus('✅ Enviados!');
-      }
-      document.getElementById('sync-btn').classList.remove('spinning');
-      renderLotes();
-      setTimeout(()=>ocultarSyncStatus(), 3000);
+  // 2. Tem URL mas sem sessão → mostrar login
+  const s = getSessao();
+  if(!s){
+    mostrarTela('login');
+    return;
+  }
+
+  // 3. Tem sessão → entrar direto e sincronizar
+  sessaoAtual = s;
+  entrarNoApp();
+
+  if(gasReady()){
+    mostrarSyncStatus('🔄 Carregando dados...');
+    document.getElementById('sync-btn').classList.add('spinning');
+    const remoto = await gasCarregarLotes();
+    if(remoto !== null){
+      const map = {};
+      lotes.forEach(l=>map[l.id]=l);
+      remoto.forEach(l=>{ map[l.id]=l; });
+      lotes = Object.values(map);
+      salvarTudo();
+      mostrarSyncStatus('✅ Dados carregados!');
+    } else if(lotes.length){
+      mostrarSyncStatus('📤 Enviando dados locais...');
+      for(const l of lotes) await gasSalvarLote(l);
+      mostrarSyncStatus('✅ Enviados!');
     }
-  } else {
-    // Sem sessão: mostrar tela de login
-    // Se não tem GAS configurado, mostra aviso inline na tela de login
-    if(!gasReady()){
-      authErro('login','⚠️ Antes do primeiro acesso, configure a URL do Apps Script na aba ⚙ Config.');
-    }
+    document.getElementById('sync-btn').classList.remove('spinning');
+    renderLotes();
+    setTimeout(()=>ocultarSyncStatus(), 3000);
   }
 });
 </script>
