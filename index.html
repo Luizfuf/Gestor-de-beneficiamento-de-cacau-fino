@@ -706,12 +706,22 @@ async function gasExcluirLote(id) {
     fetch(cfg.gas, { method: 'POST', mode: 'no-cors', headers: {'Content-Type':'application/json'}, body: JSON.stringify({acao:'excluirLote', id}) });
   } catch(e) {}
 }
-async function syncAll() {
+let _syncEmAndamento = false;
+async function syncAll(silencioso = false) {
   const cfg = getConfig();
-  if (!cfg.gas) { toast('⚙️ Configure a URL do GAS primeiro'); return; }
-  setStatus('⏳ Sincronizando...', true);
+  if (!cfg.gas) {
+    if (!silencioso) toast('⚙️ Configure a URL do GAS primeiro');
+    return false;
+  }
+  if (_syncEmAndamento) return false;
+  _syncEmAndamento = true;
+  if (!silencioso) setStatus('⏳ Sincronizando...', true);
   try {
-    const r = await fetch(cfg.gas + '?acao=lerLotes');
+    // Timeout de 10 segundos para não travar indefinidamente
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    const r = await fetch(cfg.gas + '?acao=lerLotes', { signal: controller.signal });
+    clearTimeout(timer);
     const data = await r.json();
     if (data.ok && data.lotes) {
       const remoto = data.lotes;
@@ -725,12 +735,22 @@ async function syncAll() {
         persistirLotes();
       }
       renderLotes();
-      setStatus('✅ Sincronizado', true);
-      setTimeout(() => setStatus('', false), 2000);
+      if (!silencioso) {
+        setStatus('✅ Sincronizado', true);
+        setTimeout(() => setStatus('', false), 2000);
+      }
+      _syncEmAndamento = false;
+      return true;
     }
+    throw new Error('Resposta inválida do GAS');
   } catch(e) {
-    setStatus('❌ Erro de sincronização', true);
-    setTimeout(() => setStatus('', false), 3000);
+    const msg = e.name === 'AbortError' ? '❌ Timeout — GAS demorou demais' : '❌ Erro de sincronização';
+    if (!silencioso) {
+      setStatus(msg, true);
+      setTimeout(() => setStatus('', false), 3000);
+    }
+    _syncEmAndamento = false;
+    return false;
   }
 }
 
@@ -1310,13 +1330,16 @@ function toast(msg) {
 async function checkDeepLink() {
   const params = new URLSearchParams(window.location.search);
   const loteId = params.get('lote');
-  if (!loteId) return;
+  if (!loteId) return;                      // sem parâmetro, não faz nada
   let lote = getLote(loteId);
   if (!lote) {
-    setStatus('⏳ Buscando lote...', true);
-    await syncAll();
-    lote = getLote(loteId);
-    setStatus('', false);
+    const cfg = getConfig();
+    if (cfg.gas) {                          // só tenta sincronizar se GAS estiver configurado
+      setStatus('⏳ Buscando lote...', true);
+      await syncAll(true);                  // silencioso — status já definido manualmente
+      setStatus('', false);
+      lote = getLote(loteId);
+    }
   }
   if (lote) { loteAtual = lote; setTimeout(() => abrirDetalhe(loteId), 300); }
   else toast('⚠️ Lote não encontrado: ' + loteId);
@@ -1326,7 +1349,7 @@ async function checkDeepLink() {
 carregarLotes();
 loadConfig();
 renderLotes();
-checkDeepLink();
+checkDeepLink();  // só sincroniza se houver ?lote=ID na URL
 </script>
 </body>
 </html>
