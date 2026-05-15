@@ -385,6 +385,10 @@ h3.sub-section { font-family: 'Playfair Display', serif; font-size: 16px; color:
   <div id="screen-config" class="screen">
     <div class="section-title">Configurações</div>
     <div class="section-sub">Integração e preferências</div>
+
+    <!-- Banner de status da conexão GAS -->
+    <div id="gas-source-banner" style="display:none;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;border:1px solid;font-size:13px;font-weight:600;margin-bottom:14px;background:rgba(0,0,0,.2);"></div>
+
     <div class="config-item">
       <div class="config-label">Nome da Fazenda</div>
       <input class="form-input" id="cfg-fazenda" placeholder="Ex: Fazenda Boa Vista">
@@ -590,6 +594,12 @@ function resp(data) {
 <div id="toast"></div>
 
 <script>
+// ===== ⚙️ CONFIGURAÇÃO FIXA — edite aqui antes de publicar =====
+const GAS_URL    = '';  // Cole aqui a URL do seu Google Apps Script
+const FAZENDA    = '';  // Nome da fazenda (ex: 'Fazenda Boa Vista')
+const CLAUDE_KEY = '';  // Chave da API Claude (sk-ant-...) — opcional
+// ================================================================
+
 // ===== ESTADO GLOBAL =====
 let lotes = [];
 let loteAtual = null;
@@ -601,19 +611,66 @@ const SABORES = ['🍫 Chocolate','🌸 Floral','🍓 Frutado','🌰 Amêndoas',
 const DEFEITOS = ['🟢 Mofo','💨 Fumaça','⚠️ Off-note','🤢 Putrefação'];
 
 // ===== CONFIG =====
-function getConfig() { return JSON.parse(localStorage.getItem('cacaueiro_config') || '{}'); }
+// As constantes GAS_URL / FAZENDA / CLAUDE_KEY (definidas no topo) têm prioridade
+// sobre qualquer valor salvo pelo usuário na tela de configurações.
+function getConfig() {
+  const saved = JSON.parse(localStorage.getItem('cacaueiro_config') || '{}');
+  return {
+    gas:     GAS_URL    || saved.gas     || '',
+    fazenda: FAZENDA    || saved.fazenda || '',
+    claude:  CLAUDE_KEY || saved.claude  || ''
+  };
+}
 function salvarConfig() {
-  const cfg = { fazenda: document.getElementById('cfg-fazenda').value, gas: document.getElementById('cfg-gas').value, claude: document.getElementById('cfg-claude').value };
+  const cfg = {
+    fazenda: document.getElementById('cfg-fazenda').value,
+    gas:     document.getElementById('cfg-gas').value,
+    claude:  document.getElementById('cfg-claude').value
+  };
   localStorage.setItem('cacaueiro_config', JSON.stringify(cfg));
   document.getElementById('farm-name-display').textContent = cfg.fazenda || '';
   toast('✅ Configurações salvas');
 }
 function loadConfig() {
   const cfg = getConfig();
-  if (document.getElementById('cfg-fazenda')) document.getElementById('cfg-fazenda').value = cfg.fazenda || '';
-  if (document.getElementById('cfg-gas')) document.getElementById('cfg-gas').value = cfg.gas || '';
-  if (document.getElementById('cfg-claude')) document.getElementById('cfg-claude').value = cfg.claude || '';
+  const gasEl = document.getElementById('cfg-gas');
+  const fazEl = document.getElementById('cfg-fazenda');
+  const cldEl = document.getElementById('cfg-claude');
+  if (fazEl) {
+    fazEl.value = cfg.fazenda || '';
+    if (FAZENDA) { fazEl.disabled = true; fazEl.title = 'Definido no código-fonte'; }
+  }
+  if (gasEl) {
+    gasEl.value = cfg.gas || '';
+    if (GAS_URL) { gasEl.disabled = true; gasEl.title = 'Definido no código-fonte'; }
+  }
+  if (cldEl) {
+    cldEl.value = cfg.claude || '';
+    if (CLAUDE_KEY) { cldEl.disabled = true; cldEl.title = 'Definido no código-fonte'; }
+  }
   document.getElementById('farm-name-display').textContent = cfg.fazenda || '';
+  // Banner de status da conexão
+  renderGasBanner(cfg);
+}
+function renderGasBanner(cfg) {
+  const b = document.getElementById('gas-source-banner');
+  if (!b) return;
+  if (GAS_URL) {
+    b.style.display = 'flex';
+    b.innerHTML = '<span>✅ GAS configurado no código-fonte</span>';
+    b.style.borderColor = 'var(--green)';
+    b.style.color = 'var(--green)';
+  } else if (cfg.gas) {
+    b.style.display = 'flex';
+    b.innerHTML = '<span>🔗 GAS configurado pelo usuário</span>';
+    b.style.borderColor = 'var(--gold)';
+    b.style.color = 'var(--gold)';
+  } else {
+    b.style.display = 'flex';
+    b.innerHTML = '<span>⚠️ GAS não configurado — dados apenas locais</span>';
+    b.style.borderColor = 'var(--warn)';
+    b.style.color = 'var(--warn)';
+  }
 }
 
 // ===== LOTES CRUD =====
