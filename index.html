@@ -650,137 +650,41 @@ input[type=range]::-webkit-slider-thumb{
 <body>
 
 <!-- ════════════════════════════════════════
-  AUTH OVERLAY
+  TELA DE IDENTIFICAÇÃO (só nome)
 ════════════════════════════════════════ -->
 <div id="auth-overlay">
 
   <div class="auth-logo">☽ Cacaueiro</div>
   <div class="auth-tagline">Controle de Beneficiamento de Cacau</div>
 
-  <!-- SETUP — primeira vez, sem URL configurada -->
-  <div class="auth-card" id="auth-setup" style="display:none">
-    <div class="auth-card-title">Configurar banco de dados</div>
-    <div class="auth-card-sub">Para usar o Cacaueiro, você precisa conectar ao seu Google Sheets. Isso é feito uma única vez.</div>
+  <div class="auth-card" id="auth-nome-card">
+    <div class="auth-card-title">Quem está registrando?</div>
+    <div class="auth-card-sub">Digite seu nome para identificar os registros que você fizer neste dispositivo.</div>
 
-    <div class="auth-error-box" id="setup-error"></div>
-
-    <div style="background:rgba(200,146,58,.08);border:1px solid rgba(200,146,58,.2);border-radius:var(--r-sm);padding:14px;margin-bottom:18px;font-size:.78rem;color:var(--text2);line-height:1.8">
-      <strong style="color:var(--mel);display:block;margin-bottom:6px">📋 Como obter a URL:</strong>
-      <span style="color:var(--ouro);font-weight:600">1.</span> Acesse <strong style="color:var(--areia)">sheets.new</strong> e crie uma planilha<br>
-      <span style="color:var(--ouro);font-weight:600">2.</span> Clique em <em>Extensões → Apps Script</em><br>
-      <span style="color:var(--ouro);font-weight:600">3.</span> Cole o código do arquivo <strong style="color:var(--areia)">cacau_backend.gs</strong><br>
-      <span style="color:var(--ouro);font-weight:600">4.</span> <em>Implantar → Novo deployment → App da Web</em><br>
-      &nbsp;&nbsp;&nbsp;&nbsp;Acesso: <strong style="color:var(--areia)">Qualquer pessoa</strong> → Autorizar<br>
-      <span style="color:var(--ouro);font-weight:600">5.</span> Copie a URL gerada e cole abaixo
-    </div>
+    <div class="auth-error-box" id="nome-error"></div>
 
     <div class="auth-field">
-      <label>URL do Google Apps Script</label>
-      <input type="url" id="setup-gas-url" placeholder="https://script.google.com/macros/s/..." autocomplete="off">
+      <label>Seu nome</label>
+      <input type="text" id="input-nome-usuario"
+        placeholder="Ex: João Silva"
+        autocomplete="name"
+        autocapitalize="words"
+        onkeydown="if(event.key==='Enter') entrarComNome()">
     </div>
 
-    <button class="auth-btn" id="setup-btn" onclick="salvarSetup()">
-      <span class="auth-btn-text">✓ Conectar e continuar</span>
+    <button class="auth-btn" id="nome-btn" onclick="entrarComNome()">
+      <span class="auth-btn-text">Entrar →</span>
       <span class="auth-spinner"></span>
     </button>
-  </div>
-
-  <!-- LOGIN -->
-  <div class="auth-card" id="auth-login">
-    <div class="auth-card-title">Entrar</div>
-    <div class="auth-card-sub">Acesse sua conta para gerenciar os lotes.</div>
-
-    <div class="auth-error-box" id="login-error"></div>
-    <div class="auth-success-box" id="login-success"></div>
-
-    <div class="auth-field">
-      <label>E-mail</label>
-      <input type="email" id="login-email" placeholder="seu@email.com" autocomplete="email"
-        onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
-    </div>
-    <div class="auth-field">
-      <label>Senha</label>
-      <div class="pass-wrap">
-        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"
-          onkeydown="if(event.key==='Enter')fazerLogin()">
-        <button class="toggle-pass" onclick="togglePass('login-pass',this)" type="button">👁</button>
-      </div>
-    </div>
-
-    <button class="auth-btn" id="login-btn" onclick="fazerLogin()">
-      <span class="auth-btn-text">Entrar</span>
-      <span class="auth-spinner"></span>
-    </button>
-
-    <div class="auth-switch">
-      Não tem conta? <a onclick="mostrarTela('registro')">Criar conta</a>
-    </div>
-    <div style="margin-top:12px;text-align:center">
-      <a style="font-size:.72rem;color:var(--text2);cursor:pointer" onclick="mostrarTela('setup')">⚙ Alterar banco de dados</a>
-    </div>
-  </div>
-
-  <!-- REGISTRO -->
-  <div class="auth-card" id="auth-registro" style="display:none">
-    <div class="auth-card-title">Criar conta</div>
-    <div class="auth-card-sub">Preencha os dados abaixo para se cadastrar.</div>
-
-    <div class="auth-error-box" id="reg-error"></div>
-    <div class="auth-success-box" id="reg-success"></div>
-
-    <div class="auth-field">
-      <label>Nome completo</label>
-      <input type="text" id="reg-nome" placeholder="Ex: João Silva" autocomplete="name"
-        onkeydown="if(event.key==='Enter')document.getElementById('reg-email').focus()">
-    </div>
-    <div class="auth-field">
-      <label>E-mail</label>
-      <input type="email" id="reg-email" placeholder="seu@email.com" autocomplete="email"
-        onkeydown="if(event.key==='Enter')document.getElementById('reg-pass').focus()"
-        oninput="validarEmailReg()">
-      <div class="field-hint" id="reg-email-hint"></div>
-    </div>
-    <div class="auth-field">
-      <label>Senha</label>
-      <div class="pass-wrap">
-        <input type="password" id="reg-pass" placeholder="Mínimo 8 caracteres" autocomplete="new-password"
-          oninput="avaliarSenha(this.value)"
-          onkeydown="if(event.key==='Enter')document.getElementById('reg-pass2').focus()">
-        <button class="toggle-pass" onclick="togglePass('reg-pass',this)" type="button">👁</button>
-      </div>
-      <div class="pass-strength" id="pass-strength">
-        <div class="pass-strength-bar"><div class="pass-strength-fill" id="pass-fill"></div></div>
-        <div class="pass-strength-label" id="pass-label">Fraca</div>
-      </div>
-    </div>
-    <div class="auth-field">
-      <label>Confirmar senha</label>
-      <div class="pass-wrap">
-        <input type="password" id="reg-pass2" placeholder="Repita a senha" autocomplete="new-password"
-          oninput="validarConfirmacao()"
-          onkeydown="if(event.key==='Enter')fazerRegistro()">
-        <button class="toggle-pass" onclick="togglePass('reg-pass2',this)" type="button">👁</button>
-      </div>
-      <div class="field-hint" id="reg-pass2-hint"></div>
-    </div>
-
-    <button class="auth-btn" id="reg-btn" onclick="fazerRegistro()">
-      <span class="auth-btn-text">Criar conta</span>
-      <span class="auth-spinner"></span>
-    </button>
-
-    <div class="auth-switch">
-      Já tem conta? <a onclick="mostrarTela('login')">Entrar</a>
-    </div>
   </div>
 
 </div><!-- /auth-overlay -->
 
-<!-- LOGOUT POPOVER -->
+<!-- TROCA DE USUÁRIO — popover no avatar -->
 <div class="logout-popover" id="logout-popover">
   <p id="logout-user-name">—</p>
-  <button class="logout-btn" onclick="fazerLogout()">Sair da conta</button>
-  <button class="logout-cancel" onclick="fecharLogout()">Cancelar</button>
+  <button class="logout-btn" onclick="trocarNome()">✏ Trocar nome</button>
+  <button class="logout-cancel" onclick="fecharLogout()">Fechar</button>
 </div>
 
 <!-- ════════════════════════════════════════
@@ -1077,25 +981,24 @@ input[type=range]::-webkit-slider-thumb{
 <div class="screen" id="screen-config">
   <div class="section-title">Configurações</div>
 
-  <!-- Status da conexão (readonly info) -->
   <div id="db-status" class="db-status-bar warn" style="margin-bottom:14px"></div>
 
   <div class="cfg-block">
     <div class="cfg-block-head">
       <strong>📊 Banco de Dados — Google Sheets</strong>
-      <p>A conexão é configurada na tela de acesso do app</p>
+      <p>Sincroniza os dados entre dispositivos via Google Apps Script</p>
     </div>
     <div class="cfg-block-body">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-        <span id="cfg-gas-display" style="font-size:.75rem;color:var(--text2);word-break:break-all;flex:1">—</span>
-        <div style="display:flex;gap:8px;flex-shrink:0">
-          <button class="btn btn-secondary btn-sm" onclick="sincronizarAgora()">🔄 Sincronizar</button>
-          <button class="btn btn-ghost btn-sm" onclick="testarConexao()">🔌 Testar</button>
-        </div>
+      <div class="cfg-item">
+        <label>URL do Google Apps Script</label>
+        <input type="url" id="cfg-gas-url" placeholder="https://script.google.com/macros/s/..."
+          oninput="salvarConfig()">
+        <p>Opcional. Cole aqui a URL do seu Web App para sincronizar entre celulares.</p>
       </div>
-      <button class="btn btn-ghost btn-sm" style="margin-top:10px;width:100%" onclick="mostrarTrocarUrl()">
-        ✏ Alterar URL do banco de dados
-      </button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="testarConexao()">🔌 Testar</button>
+        <button class="btn btn-secondary btn-sm" onclick="sincronizarAgora()">🔄 Sincronizar</button>
+      </div>
     </div>
   </div>
 
@@ -1120,8 +1023,8 @@ input[type=range]::-webkit-slider-thumb{
     </div>
   </div>
 
-  <button class="btn" style="background:rgba(192,57,43,.15);color:#e05a4a;border:1px solid rgba(192,57,43,.3);margin-top:8px" onclick="fazerLogout()">
-    Sair da conta
+  <button class="btn" style="background:rgba(200,146,58,.1);color:var(--mel);border:1px solid rgba(200,146,58,.3);margin-top:8px" onclick="trocarNome()">
+    ✏ Trocar nome de usuário
   </button>
 </div>
 
@@ -2212,248 +2115,94 @@ function toggleVoz(){
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  AUTH — Login / Registro via Google Apps Script
+//  IDENTIFICAÇÃO — apenas nome local, sem senha
 // ═══════════════════════════════════════════════════════════════
 
-// Sessão atual (salva em sessionStorage para durar enquanto a aba estiver aberta,
-// e em localStorage para "lembrar" entre sessões)
 let sessaoAtual = null;
 
+// Lê sessão do localStorage (persiste entre aberturas)
 function getSessao(){
-  const s = sessionStorage.getItem('cacau_sessao') || localStorage.getItem('cacau_sessao');
+  const s = localStorage.getItem('cacau_sessao');
   return s ? JSON.parse(s) : null;
 }
 
-function setSessao(dados, lembrar = true){
+function setSessao(dados){
   sessaoAtual = dados;
-  const j = JSON.stringify(dados);
-  sessionStorage.setItem('cacau_sessao', j);
-  if(lembrar) localStorage.setItem('cacau_sessao', j);
+  localStorage.setItem('cacau_sessao', JSON.stringify(dados));
 }
 
 function limparSessao(){
   sessaoAtual = null;
-  sessionStorage.removeItem('cacau_sessao');
   localStorage.removeItem('cacau_sessao');
 }
 
-// ── Tela: alternar login ↔ registro ↔ setup ──────────────────────
-function mostrarTela(tela){
-  document.getElementById('auth-setup').style.display    = tela==='setup'    ? 'block' : 'none';
-  document.getElementById('auth-login').style.display    = tela==='login'    ? 'block' : 'none';
-  document.getElementById('auth-registro').style.display = tela==='registro' ? 'block' : 'none';
-  ['login-error','login-success','reg-error','reg-success','setup-error'].forEach(id=>{
-    const el = document.getElementById(id);
-    if(el){ el.textContent=''; el.classList.remove('show'); }
-  });
-}
+// ── Entrar apenas com nome ────────────────────────────────────────
+function entrarComNome(){
+  const inp  = document.getElementById('input-nome-usuario');
+  const nome = inp.value.trim();
+  const err  = document.getElementById('nome-error');
 
-async function salvarSetup(){
-  const url = document.getElementById('setup-gas-url').value.trim();
-  if(!url){ authErro('setup','Cole a URL do Apps Script no campo acima.'); return; }
-  if(!url.startsWith('https://script.google.com/')){
-    authErro('setup','URL inválida. Deve começar com https://script.google.com/macros/s/...'); return;
+  if(!nome){
+    err.textContent = 'Digite seu nome para continuar.';
+    err.classList.add('show');
+    inp.focus();
+    return;
   }
-  setBtnLoading('setup-btn', true);
-  // Testa a conexão — aceita falha de CORS como indicativo de que a URL existe
-  let conectou = false;
-  try{
-    const r = await fetch(`${url}?acao=ping`);
-    const txt = await r.text();
-    try{
-      const d = JSON.parse(txt);
-      conectou = !!d.ok;
-      if(!conectou){ authErro('setup','Apps Script respondeu com erro: '+(d.msg||txt.slice(0,80))); setBtnLoading('setup-btn',false); return; }
-    }catch(e){
-      // Resposta não é JSON — pode ser erro HTML do GAS (permissão negada etc)
-      authErro('setup','Apps Script não respondeu corretamente. Verifique se o deployment tem acesso "Qualquer pessoa".');
-      setBtnLoading('setup-btn',false); return;
-    }
-  }catch(e){
-    // Erro de rede/CORS — salva mesmo assim e avisa
-    conectou = true; // assume que a URL é válida, o usuário verá erro depois se não for
+  if(nome.length < 2){
+    err.textContent = 'Nome muito curto. Digite pelo menos 2 caracteres.';
+    err.classList.add('show');
+    inp.focus();
+    return;
   }
-  localStorage.setItem('cacau_gas_url', url);
-  setBtnLoading('setup-btn',false);
-  atualizarStatusGas();
-  mostrarTela('login');
-  toast('✅ Banco de dados configurado!');
-}
 
-// ── Mostrar/ocultar senha ─────────────────────────────────────────
-function togglePass(inputId, btn){
-  const inp = document.getElementById(inputId);
-  if(inp.type==='password'){ inp.type='text'; btn.textContent='🙈'; }
-  else { inp.type='password'; btn.textContent='👁'; }
-}
+  err.textContent = ''; err.classList.remove('show');
 
-// ── Validação de e-mail ───────────────────────────────────────────
-function validarEmailReg(){
-  const v = document.getElementById('reg-email').value.trim();
-  const h = document.getElementById('reg-email-hint');
-  if(!v){ h.textContent=''; h.className='field-hint'; return; }
-  const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-  h.textContent = ok ? '✓ E-mail válido' : '✗ Formato inválido';
-  h.className   = ok ? 'field-hint ok' : 'field-hint err';
-}
-
-// ── Força da senha ────────────────────────────────────────────────
-function avaliarSenha(v){
-  const bar   = document.getElementById('pass-strength');
-  const fill  = document.getElementById('pass-fill');
-  const label = document.getElementById('pass-label');
-  bar.classList.toggle('show', v.length > 0);
-  if(!v.length) return;
-
-  let score = 0;
-  if(v.length >= 8)  score++;
-  if(v.length >= 12) score++;
-  if(/[A-Z]/.test(v)) score++;
-  if(/[0-9]/.test(v)) score++;
-  if(/[^A-Za-z0-9]/.test(v)) score++;
-
-  const config = [
-    {pct:'20%', bg:'#C0392B', txt:'Muito fraca'},
-    {pct:'40%', bg:'#E67E22', txt:'Fraca'},
-    {pct:'60%', bg:'#F1C40F', txt:'Razoável'},
-    {pct:'80%', bg:'#27AE60', txt:'Boa'},
-    {pct:'100%',bg:'#1ABC9C', txt:'Excelente'},
-  ];
-  const c = config[Math.max(0, Math.min(score, config.length)-1)];
-  fill.style.width      = c.pct;
-  fill.style.background = c.bg;
-  label.textContent     = c.txt;
-  label.style.color     = c.bg;
-}
-
-// ── Confirmar senha ───────────────────────────────────────────────
-function validarConfirmacao(){
-  const p1 = document.getElementById('reg-pass').value;
-  const p2 = document.getElementById('reg-pass2').value;
-  const h  = document.getElementById('reg-pass2-hint');
-  if(!p2){ h.textContent=''; h.className='field-hint'; return; }
-  const ok = p1 === p2;
-  h.textContent = ok ? '✓ Senhas coincidem' : '✗ Senhas não coincidem';
-  h.className   = ok ? 'field-hint ok' : 'field-hint err';
-}
-
-// ── Mostrar erro / sucesso ────────────────────────────────────────
-function authErro(prefix, msg){
-  const el = document.getElementById(prefix+'-error');
-  el.textContent = msg; el.classList.add('show');
-}
-function authSucesso(prefix, msg){
-  const el = document.getElementById(prefix+'-success');
-  el.textContent = msg; el.classList.add('show');
-}
-function authLimpar(prefix){
-  ['error','success'].forEach(t=>{
-    const el = document.getElementById(prefix+'-'+t);
-    if(el){ el.textContent=''; el.classList.remove('show'); }
-  });
-}
-
-// ── Spinner nos botões ────────────────────────────────────────────
-function setBtnLoading(id, loading){
-  document.getElementById(id).classList.toggle('loading', loading);
-  document.getElementById(id).disabled = loading;
-}
-
-// ── Chamar GAS para auth ──────────────────────────────────────────
-// (definida na seção de helpers GAS acima)
-
-// ── REGISTRO ─────────────────────────────────────────────────────
-async function fazerRegistro(){
-  authLimpar('reg');
-  const nome  = document.getElementById('reg-nome').value.trim();
-  const email = document.getElementById('reg-email').value.trim().toLowerCase();
-  const pass  = document.getElementById('reg-pass').value;
-  const pass2 = document.getElementById('reg-pass2').value;
-
-  if(!nome)  return authErro('reg','Informe seu nome.');
-  if(!email) return authErro('reg','Informe seu e-mail.');
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return authErro('reg','E-mail inválido.');
-  if(!pass)  return authErro('reg','Crie uma senha.');
-  if(pass.length < 8)   return authErro('reg','A senha precisa ter pelo menos 8 caracteres.');
-  if(pass !== pass2)    return authErro('reg','As senhas não coincidem.');
-
-  if(!gasReady()) return authErro('reg','Banco de dados não configurado. Volte e configure a URL.');
-
-  setBtnLoading('reg-btn', true);
-  const senhaHash = await hashSimples(pass);
-  const res = await gasAuth({ acao:'auth', sub:'registro', nome, email, senha: senhaHash });
-  setBtnLoading('reg-btn', false);
-
-  if(!res.ok) return authErro('reg', res.msg);
-
-  authSucesso('reg', '✅ Conta criada! Entrando...');
-  setTimeout(()=>{
-    setSessao({ id:res.userId, nome:res.nome, email:res.email, token:res.token });
-    entrarNoApp();
-  }, 1200);
-}
-
-// ── LOGIN ─────────────────────────────────────────────────────────
-async function fazerLogin(){
-  authLimpar('login');
-  const email = document.getElementById('login-email').value.trim().toLowerCase();
-  const pass  = document.getElementById('login-pass').value;
-
-  if(!email) return authErro('login','Informe seu e-mail.');
-  if(!pass)  return authErro('login','Informe sua senha.');
-
-  if(!gasReady()) return authErro('login','Banco de dados não configurado. Toque em "Alterar banco de dados".');
-
-  setBtnLoading('login-btn', true);
-  const senhaHash = await hashSimples(pass);
-  const res = await gasAuth({ acao:'auth', sub:'login', email, senha: senhaHash });
-  setBtnLoading('login-btn', false);
-
-  if(!res.ok) return authErro('login', res.msg);
-
-  setSessao({ id:res.userId, nome:res.nome, email:res.email, token:res.token });
+  // Cria sessão local com ID estável baseado no nome (não muda entre sessões)
+  const id = 'U_' + nome.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+  setSessao({ id, nome });
   entrarNoApp();
 }
 
-// ── LOGOUT ────────────────────────────────────────────────────────
+// ── Trocar nome ───────────────────────────────────────────────────
+function trocarNome(){
+  fecharLogout();
+  // Pré-preenche o campo com o nome atual
+  const inp = document.getElementById('input-nome-usuario');
+  if(inp) inp.value = sessaoAtual?.nome || '';
+  ocultarApp();
+  setTimeout(()=>inp?.focus(), 200);
+}
+
+// ── Popover de usuário ────────────────────────────────────────────
 function toggleLogout(){
   const p = document.getElementById('logout-popover');
   p.classList.toggle('open');
   if(p.classList.contains('open')){
     const el = document.getElementById('logout-user-name');
-    el.innerHTML = `<strong style="color:var(--areia);font-size:.82rem">${sessaoAtual?.nome||''}</strong><br><span style="font-size:.72rem">${sessaoAtual?.email||''}</span>`;
+    el.innerHTML = `<strong style="color:var(--areia);font-size:.88rem">${sessaoAtual?.nome||'—'}</strong>`;
   }
 }
 function fecharLogout(){ document.getElementById('logout-popover').classList.remove('open'); }
 
-function fazerLogout(){
-  limparSessao();
-  fecharLogout();
-  // Limpa dados locais do lote (cada usuário tem seus próprios lotes)
-  lotes = [];
-  salvarTudo();
-  ocultarApp();
-}
-
-// ── Mostrar/ocultar app ───────────────────────────────────────────
+// ── Entrar / sair do app ──────────────────────────────────────────
 function entrarNoApp(){
   const s = sessaoAtual || getSessao();
   if(!s){ ocultarApp(); return; }
   sessaoAtual = s;
 
-  const iniciais = (s.nome||'?').split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
+  // Iniciais no avatar
+  const iniciais = s.nome.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
   document.getElementById('user-avatar').textContent       = iniciais;
   document.getElementById('user-display-name').textContent = s.nome.split(' ')[0];
 
-  // Carrega lotes do namespace correto para este usuário
-  lotes = JSON.parse(localStorage.getItem(getLotesKey()) || '[]');
+  // Lotes são compartilhados (chave única) — todos no mesmo dispositivo veem tudo
+  lotes = JSON.parse(localStorage.getItem('cacau_lotes') || '[]');
 
   document.getElementById('auth-overlay').classList.add('hidden');
   document.getElementById('app-root').style.display = 'flex';
-
   renderLotes();
 
-  // Deep link após login
+  // Deep link
   const params = new URLSearchParams(window.location.search);
   const loteId = params.get('lote');
   if(loteId){
@@ -2467,18 +2216,12 @@ function entrarNoApp(){
 }
 
 function ocultarApp(){
+  lotes = [];
   document.getElementById('app-root').style.display = 'none';
   document.getElementById('auth-overlay').classList.remove('hidden');
-  // Se não tem URL configurada, mostra setup; senão mostra login
-  mostrarTela(gasReady() ? 'login' : 'setup');
-}
-
-// ── Hash simples (não é criptografia real, mas evita trafegar senha em texto puro) ──
-// Para produção, use PBKDF2 ou bcrypt via servidor. Aqui usamos SHA-256 via SubtleCrypto.
-async function hashSimples(txt){
-  // Retorna hex de SHA-256
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt));
-  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  // Limpa e foca o campo de nome
+  const inp = document.getElementById('input-nome-usuario');
+  if(inp){ inp.value = sessaoAtual?.nome || ''; setTimeout(()=>inp.focus(), 150); }
 }
 
 // ── Fechar popover ao clicar fora ─────────────────────────────────
