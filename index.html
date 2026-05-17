@@ -981,24 +981,14 @@ input[type=range]::-webkit-slider-thumb{
 <div class="screen" id="screen-config">
   <div class="section-title">Configurações</div>
 
-  <div id="db-status" class="db-status-bar warn" style="margin-bottom:14px"></div>
-
   <div class="cfg-block">
     <div class="cfg-block-head">
       <strong>📊 Banco de Dados — Google Sheets</strong>
-      <p>Sincroniza os dados entre dispositivos via Google Apps Script</p>
+      <p>Sincroniza os dados entre dispositivos automaticamente</p>
     </div>
     <div class="cfg-block-body">
-      <div class="cfg-item">
-        <label>URL do Google Apps Script</label>
-        <input type="url" id="cfg-gas-url" placeholder="https://script.google.com/macros/s/..."
-          oninput="salvarConfig()">
-        <p>Opcional. Cole aqui a URL do seu Web App para sincronizar entre celulares.</p>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-primary btn-sm" onclick="testarConexao()">🔌 Testar</button>
-        <button class="btn btn-secondary btn-sm" onclick="sincronizarAgora()">🔄 Sincronizar</button>
-      </div>
+      <div id="db-status" class="db-status-bar warn" style="margin-bottom:12px"></div>
+      <button class="btn btn-secondary btn-sm" onclick="sincronizarAgora()">🔄 Sincronizar agora</button>
     </div>
   </div>
 
@@ -1115,7 +1105,11 @@ function getLotesKey(){
 }
 
 // ── GAS / SYNC ────────────────────────────────────────────────────
-function getGasUrl(){ return (localStorage.getItem('cacau_gas_url')||'').trim(); }
+// ▼▼▼ COLE SUA URL DO APPS SCRIPT AQUI ▼▼▼
+const GAS_URL = 'COLE_SUA_URL_AQUI';
+// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+function getGasUrl(){ return GAS_URL.startsWith('https://') ? GAS_URL : ''; }
 function gasReady(){ return !!getGasUrl(); }
 
 async function gasCarregarLotes(){
@@ -1172,9 +1166,10 @@ async function gasAuth(payload){
   }
 }
 
-// ÚNICA definição de salvarTudo — usa chave por usuário
+// ÚNICA definição de salvarTudo — chave fixa, sem namespace por usuário
+// (sem sistema de multi-conta, todos no dispositivo compartilham os lotes)
 function salvarTudo(){
-  localStorage.setItem(getLotesKey(), JSON.stringify(lotes));
+  localStorage.setItem('cacau_lotes', JSON.stringify(lotes));
 }
 
 async function salvarLoteCompleto(lote){ salvarTudo(); await gasSalvarLote(lote); }
@@ -1210,12 +1205,6 @@ function atualizarStatusGas(){
   }
 }
 
-function mostrarTrocarUrl(){
-  ocultarApp();
-  mostrarTela('setup');
-  const el = document.getElementById('setup-gas-url');
-  if(el) el.value = getGasUrl();
-}
 
 // ── NAVIGATION ────────────────────────────────────────────────────
 function showScreen(id){
@@ -1977,23 +1966,28 @@ function mostrarSyncStatus(msg){
 function ocultarSyncStatus(){ document.getElementById('sync-bar').style.display='none'; }
 
 async function sincronizarAgora(){
-  if(!gasReady()){ toast('⚠️ Configure o Apps Script na aba Config'); return; }
-  const btn=document.getElementById('sync-btn');
+  if(!gasReady()){
+    // Sem GAS configurado — funciona offline, sem mensagem de erro
+    return;
+  }
+  const btn = document.getElementById('sync-btn');
   btn.classList.add('spinning');
-  mostrarSyncStatus('🔄 Sincronizando com Google Sheets...');
-  const remoto=await gasCarregarLotes();
-  if(remoto!==null){
-    const map={};
-    lotes.forEach(l=>map[l.id]=l);
-    remoto.forEach(l=>{map[l.id]=l;});
-    lotes=Object.values(map);
-    salvarTudo(); renderLotes();
+  mostrarSyncStatus('🔄 Sincronizando...');
+  const remoto = await gasCarregarLotes();
+  if(remoto !== null){
+    const map = {};
+    lotes.forEach(l => map[l.id] = l);
+    remoto.forEach(l => { map[l.id] = l; });
+    lotes = Object.values(map);
+    salvarTudo();
+    renderLotes();
     mostrarSyncStatus('✅ Sincronizado!');
   } else {
-    mostrarSyncStatus('⚠️ Não foi possível conectar. Verifique a URL do Apps Script.');
+    // Falha silenciosa — não atrapalha o uso offline
+    ocultarSyncStatus();
   }
   btn.classList.remove('spinning');
-  setTimeout(()=>ocultarSyncStatus(), 3000);
+  setTimeout(()=>ocultarSyncStatus(), 2500);
 }
 
 async function testarConexao(){
@@ -2195,7 +2189,7 @@ function entrarNoApp(){
   document.getElementById('user-avatar').textContent       = iniciais;
   document.getElementById('user-display-name').textContent = s.nome.split(' ')[0];
 
-  // Lotes são compartilhados (chave única) — todos no mesmo dispositivo veem tudo
+  // Todos os lotes do dispositivo — chave única compartilhada
   lotes = JSON.parse(localStorage.getItem('cacau_lotes') || '[]');
 
   document.getElementById('auth-overlay').classList.add('hidden');
@@ -2244,42 +2238,37 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('n-entrada-ferm').value = hoje;
   document.getElementById('d-data-sens').value    = hoje;
 
-  // 1. Sem URL configurada → mostrar tela de setup (configurar banco)
-  if(!gasReady()){
-    mostrarTela('setup');
-    return;
-  }
-
-  // 2. Tem URL mas sem sessão → mostrar login
+  // Verifica se já tem nome salvo → entra direto
   const s = getSessao();
-  if(!s){
-    mostrarTela('login');
-    return;
-  }
+  if(s){
+    sessaoAtual = s;
+    entrarNoApp();
 
-  // 3. Tem sessão → entrar direto e sincronizar
-  sessaoAtual = s;
-  entrarNoApp();
-
-  if(gasReady()){
-    mostrarSyncStatus('🔄 Carregando dados...');
-    document.getElementById('sync-btn').classList.add('spinning');
-    const remoto = await gasCarregarLotes();
-    if(remoto !== null){
-      const map = {};
-      lotes.forEach(l=>map[l.id]=l);
-      remoto.forEach(l=>{ map[l.id]=l; });
-      lotes = Object.values(map);
-      salvarTudo();
-      mostrarSyncStatus('✅ Dados carregados!');
-    } else if(lotes.length){
-      mostrarSyncStatus('📤 Enviando dados locais...');
-      for(const l of lotes) await gasSalvarLote(l);
-      mostrarSyncStatus('✅ Enviados!');
+    // Só tenta sincronizar se o GAS estiver configurado
+    if(gasReady()){
+      mostrarSyncStatus('🔄 Sincronizando...');
+      document.getElementById('sync-btn').classList.add('spinning');
+      const remoto = await gasCarregarLotes();
+      if(remoto !== null){
+        const map = {};
+        lotes.forEach(l => map[l.id] = l);
+        remoto.forEach(l => { map[l.id] = l; });
+        lotes = Object.values(map);
+        salvarTudo();
+        renderLotes();
+        mostrarSyncStatus('✅ Sincronizado!');
+      } else {
+        // Falha silenciosa — não mostra erro, apenas oculta a barra
+        ocultarSyncStatus();
+      }
+      document.getElementById('sync-btn').classList.remove('spinning');
+      setTimeout(()=>ocultarSyncStatus(), 2500);
     }
-    document.getElementById('sync-btn').classList.remove('spinning');
-    renderLotes();
-    setTimeout(()=>ocultarSyncStatus(), 3000);
+  } else {
+    // Sem nome → mostrar tela de identificação
+    document.getElementById('auth-overlay').classList.remove('hidden');
+    document.getElementById('app-root').style.display = 'none';
+    setTimeout(()=>document.getElementById('input-nome-usuario')?.focus(), 200);
   }
 });
 </script>
