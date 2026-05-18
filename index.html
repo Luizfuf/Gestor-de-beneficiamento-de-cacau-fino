@@ -1016,6 +1016,10 @@ input[type=range]::-webkit-slider-thumb{
   <button class="btn" style="background:rgba(200,146,58,.1);color:var(--mel);border:1px solid rgba(200,146,58,.3);margin-top:8px" onclick="trocarNome()">
     ✏ Trocar nome de usuário
   </button>
+
+  <button class="btn" style="background:rgba(192,57,43,.08);color:#e05a4a;border:1px solid rgba(192,57,43,.25);margin-top:8px;font-size:.82rem" onclick="limparTodosLotes()">
+    🗑 Apagar TODOS os lotes deste dispositivo
+  </button>
 </div>
 
 </main>
@@ -1106,7 +1110,7 @@ function getLotesKey(){
 
 // ── GAS / SYNC ────────────────────────────────────────────────────
 // ▼▼▼ COLE SUA URL DO APPS SCRIPT AQUI ▼▼▼
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbz8VAVP0u3M5jn1RBR0Gd5lEmA5GMFkjbupgVlH9cNGEWwL6t9E-QzZuLimE40wEVoy0g/exec';
+const GAS_URL = 'COLE_SUA_URL_AQUI';
 // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
 function getGasUrl(){ return GAS_URL.startsWith('https://') ? GAS_URL : ''; }
@@ -1173,6 +1177,26 @@ async function gasAuth(payload){
 // (sem sistema de multi-conta, todos no dispositivo compartilham os lotes)
 function salvarTudo(){
   localStorage.setItem('cacau_lotes', JSON.stringify(lotes));
+}
+
+// ── TOMBSTONE — controle de exclusões para sync ───────────────────
+// Quando um lote é apagado, registra o ID + timestamp aqui.
+// Durante o sync, IDs presentes nesta lista são removidos de ambos os lados.
+function getDeletions(){
+  return JSON.parse(localStorage.getItem('cacau_deletions') || '[]');
+}
+function salvarDeletion(id){
+  const list = getDeletions();
+  if(!list.find(d => d.id === id)){
+    list.push({ id, ts: Date.now() });
+    localStorage.setItem('cacau_deletions', JSON.stringify(list));
+  }
+}
+function limparDeletionsAntigas(){
+  // Mantém apenas os últimos 30 dias para não acumular indefinidamente
+  const corte = Date.now() - (30 * 24 * 60 * 60 * 1000);
+  const filtrado = getDeletions().filter(d => d.ts > corte);
+  localStorage.setItem('cacau_deletions', JSON.stringify(filtrado));
 }
 
 async function salvarLoteCompleto(lote){
@@ -1706,15 +1730,18 @@ async function executarExclusao(){
   const id = loteParaExcluir;
   loteParaExcluir = null;
 
-  // Remove localmente primeiro — UX imediata
-  lotes = lotes.filter(l=>l.id!==id);
+  // Registra tombstone — garante que outros dispositivos também apaguem na próxima sync
+  salvarDeletion(id);
+
+  // Remove localmente — UX imediata
+  lotes = lotes.filter(l => l.id !== id);
   if(loteAtual?.id === id) loteAtual = null;
   salvarTudo();
   fecharModal('confirm-modal');
   renderLotes();
   toast('🗑 Lote excluído.');
 
-  // Agora tenta remover do banco (sem bloquear a UI)
+  // Remove do banco em segundo plano
   if(gasReady()){
     const res = await gasExcluirLoteRemoto(id);
     if(!res.ok){
@@ -1993,12 +2020,27 @@ async function sincronizarAgora(){
   const remoto = await gasCarregarLotes();
 
   if(remoto !== null){
-    // Merge: remoto tem prioridade (dados mais recentes do servidor)
+    const deletions = getDeletions();
+    const deletedIds = new Set(deletions.map(d => d.id));
+
+    // 1. Apaga do banco remoto qualquer ID que está na lista de tombstones locais
+    for(const d of deletions){
+      const aindaExisteRemoto = remoto.find(l => l.id === d.id);
+      if(aindaExisteRemoto){
+        await gasExcluirLoteRemoto(d.id); // remove do GAS
+      }
+    }
+
+    // 2. Merge: pega todos do remoto que NÃO foram deletados
     const map = {};
-    lotes.forEach(l => map[l.id] = l);
-    remoto.forEach(l => { map[l.id] = l; });
+    lotes.forEach(l => { if(!deletedIds.has(l.id)) map[l.id] = l; });
+    remoto.forEach(l => { if(!deletedIds.has(l.id)) map[l.id] = l; });
     lotes = Object.values(map);
     salvarTudo();
+
+    // 3. Limpeza de tombstones antigos
+    limparDeletionsAntigas();
+
     renderLotes();
     mostrarSyncStatus('✅ Sincronizado — '+lotes.length+' lote(s)');
   } else {
@@ -2237,6 +2279,15 @@ function ocultarApp(){
   if(inp){ inp.value = sessaoAtual?.nome || ''; setTimeout(()=>inp.focus(), 150); }
 }
 
+function limparTodosLotes(){
+  if(!confirm('Tem certeza? Isso apaga TODOS os lotes salvos neste dispositivo. Esta ação não pode ser desfeita.')) return;
+  lotes = [];
+  salvarTudo();
+  renderLotes();
+  showScreen('lotes');
+  toast('🗑 Todos os lotes apagados deste dispositivo.');
+}
+
 // ── Fechar popover ao clicar fora ─────────────────────────────────
 document.addEventListener('click', e=>{
   const pop = document.getElementById('logout-popover');
@@ -2269,11 +2320,19 @@ document.addEventListener('DOMContentLoaded', async ()=>{
       document.getElementById('sync-btn').classList.add('spinning');
       const remoto = await gasCarregarLotes();
       if(remoto !== null){
+        const deletions = getDeletions();
+        const deletedIds = new Set(deletions.map(d => d.id));
+        // Apaga do banco remoto os que foram deletados localmente
+        for(const d of deletions){
+          if(remoto.find(l => l.id === d.id)) await gasExcluirLoteRemoto(d.id);
+        }
+        // Merge sem os deletados
         const map = {};
-        lotes.forEach(l => map[l.id] = l);
-        remoto.forEach(l => { map[l.id] = l; });
+        lotes.forEach(l => { if(!deletedIds.has(l.id)) map[l.id] = l; });
+        remoto.forEach(l => { if(!deletedIds.has(l.id)) map[l.id] = l; });
         lotes = Object.values(map);
         salvarTudo();
+        limparDeletionsAntigas();
         renderLotes();
         mostrarSyncStatus('✅ Sincronizado — '+lotes.length+' lote(s)');
       } else {
