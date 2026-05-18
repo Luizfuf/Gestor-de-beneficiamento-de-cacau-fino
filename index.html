@@ -782,6 +782,7 @@ input[type=range]::-webkit-slider-thumb{
     <div class="detail-actions">
       <button class="btn btn-sm btn-secondary" onclick="abrirShare()" title="Compartilhar">🔗</button>
       <button class="btn btn-sm btn-green" onclick="gerarRelatorio()" title="Relatório PDF">📄</button>
+      <button class="btn btn-sm btn-secondary" onclick="toggleAcoes()" title="Ações">⋯</button>
     </div>
   </div>
 
@@ -1022,17 +1023,107 @@ input[type=range]::-webkit-slider-thumb{
   </button>
 </div>
 
+<!-- ════════════════════════════════════════
+  SCREEN: ARQUIVADOS
+════════════════════════════════════════ -->
+<div class="screen" id="screen-arquivados">
+  <div class="lotes-toolbar">
+    <h2>📦 Arquivados</h2>
+  </div>
+  <p style="font-size:.78rem;color:var(--text2);margin-bottom:16px">Lotes arquivados não aparecem na lista principal.</p>
+  <div id="arquivados-list">
+    <div class="empty"><div class="ei">📦</div><h3>Nenhum lote arquivado</h3><p>Dentro de um lote, toque em "⋯ Ações" para arquivar.</p></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+  SCREEN: VENDIDOS
+════════════════════════════════════════ -->
+<div class="screen" id="screen-vendidos">
+  <div class="lotes-toolbar"><h2>💰 Vendidos</h2></div>
+  <div id="vendidos-resumo" style="margin-bottom:16px"></div>
+  <div id="vendidos-list">
+    <div class="empty"><div class="ei">💰</div><h3>Nenhuma venda registrada</h3><p>Dentro de um lote, toque em "⋯ Ações" → Marcar como vendido.</p></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+  SCREEN: BLENDS
+════════════════════════════════════════ -->
+<div class="screen" id="screen-blends">
+  <div class="lotes-toolbar">
+    <h2>🧪 Blends</h2>
+    <button class="btn btn-primary btn-sm" onclick="mostrarNovoBlend()">+ Novo</button>
+  </div>
+  <div id="blends-list">
+    <div class="empty"><div class="ei">🧪</div><h3>Nenhum blend criado</h3><p>Combine lotes para calcular médias de fermentação e totais de peso.</p></div>
+  </div>
+</div>
+
 </main>
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
-  <button class="bnav-btn active" id="bnav-lotes" onclick="showScreen('lotes')"><span class="icon">🌱</span>Lotes</button>
-  <button class="bnav-btn" id="bnav-novo" onclick="showScreen('novo')"><span class="icon">＋</span>Novo</button>
-  <button class="bnav-btn" id="bnav-chat" onclick="showScreen('chat')"><span class="icon">🤖</span>IA</button>
-  <button class="bnav-btn" id="bnav-config" onclick="showScreen('config')"><span class="icon">⚙</span>Config</button>
+  <button class="bnav-btn active" id="bnav-lotes"     onclick="showScreen('lotes')">      <span class="icon">🌱</span>Lotes</button>
+  <button class="bnav-btn"       id="bnav-arquivados" onclick="showScreen('arquivados')">  <span class="icon">📦</span>Arquivo</button>
+  <button class="bnav-btn"       id="bnav-vendidos"   onclick="showScreen('vendidos')">    <span class="icon">💰</span>Vendas</button>
+  <button class="bnav-btn"       id="bnav-blends"     onclick="showScreen('blends')">      <span class="icon">🧪</span>Blends</button>
+  <button class="bnav-btn"       id="bnav-novo"       onclick="showScreen('novo')">        <span class="icon">＋</span>Novo</button>
+  <button class="bnav-btn"       id="bnav-chat"       onclick="showScreen('chat')">        <span class="icon">🤖</span>IA</button>
+  <button class="bnav-btn"       id="bnav-config"     onclick="showScreen('config')">      <span class="icon">⚙</span>Config</button>
 </nav>
 
 </div><!-- /app-root -->
+
+<!-- AÇÕES POPOVER -->
+<div class="logout-popover" id="acoes-popover" style="right:16px;top:64px;width:220px">
+  <p style="font-size:.72rem;color:var(--text2);margin-bottom:10px">Ações do lote</p>
+  <button onclick="arquivarLote()" style="width:100%;padding:10px;border:none;border-radius:8px;background:var(--card);color:var(--text);font-family:'Inter',sans-serif;font-size:.84rem;cursor:pointer;text-align:left;margin-bottom:6px;border:1px solid var(--border)">📦 Arquivar lote</button>
+  <button onclick="abrirModalVenda()" style="width:100%;padding:10px;border:none;border-radius:8px;background:var(--card);color:var(--text);font-family:'Inter',sans-serif;font-size:.84rem;cursor:pointer;text-align:left;margin-bottom:6px;border:1px solid var(--border)">💰 Marcar como vendido</button>
+  <button onclick="fecharAcoes()" style="width:100%;padding:8px;border:none;border-radius:8px;background:transparent;color:var(--text2);font-family:'Inter',sans-serif;font-size:.78rem;cursor:pointer">Cancelar</button>
+</div>
+
+<!-- MODAL VENDA -->
+<div class="modal-backdrop" id="venda-modal">
+  <div class="modal-card" style="max-width:380px">
+    <h3>💰 Registrar Venda</h3>
+    <p style="margin-bottom:16px" id="venda-lote-info">—</p>
+    <div class="field">
+      <label style="display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:7px">Valor por @ (R$) <span style="font-weight:400;font-size:.68rem">1@ = 15 kg</span></label>
+      <input type="number" id="venda-valor-arroba" step="0.01" min="0" placeholder="Ex: 280.00"
+        style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r-sm);background:#1a0f06;color:var(--text);font-family:'Inter',sans-serif;font-size:1rem">
+    </div>
+    <div class="field">
+      <label style="display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:7px">Data da venda</label>
+      <input type="date" id="venda-data"
+        style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r-sm);background:#1a0f06;color:var(--text);font-family:'Inter',sans-serif;font-size:1rem">
+    </div>
+    <div id="venda-preview" style="background:rgba(200,146,58,.08);border:1px solid rgba(200,146,58,.2);border-radius:var(--r-sm);padding:12px;margin-bottom:14px;font-size:.82rem;display:none"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="fecharModal('venda-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarVenda()">💰 Confirmar venda</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO BLEND -->
+<div class="modal-backdrop" id="blend-modal">
+  <div class="modal-card" style="max-width:420px;max-height:90vh;overflow-y:auto">
+    <h3>🧪 Novo Blend</h3>
+    <p style="margin-bottom:16px;font-size:.8rem;color:var(--text2)">Selecione os lotes e informe o peso de cada um que vai entrar no blend.</p>
+    <div class="field">
+      <label style="display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:7px">Nome do blend</label>
+      <input type="text" id="blend-nome" placeholder="Ex: Blend Especial Maio/2026"
+        style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r-sm);background:#1a0f06;color:var(--text);font-family:'Inter',sans-serif;font-size:.95rem">
+    </div>
+    <div id="blend-lotes-check" style="margin-bottom:16px"></div>
+    <div id="blend-preview" style="background:rgba(200,146,58,.08);border:1px solid rgba(200,146,58,.2);border-radius:var(--r-sm);padding:12px;margin-bottom:14px;font-size:.82rem;display:none"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="fecharModal('blend-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarBlend()">✓ Criar blend</button>
+    </div>
+  </div>
+</div>
 
 <!-- SHARE MODAL -->
 <div class="modal-backdrop" id="share-modal">
@@ -1067,18 +1158,27 @@ input[type=range]::-webkit-slider-thumb{
 
 <!-- T PANEL MODAL -->
 <div class="modal-backdrop" id="tmod-modal">
-  <div class="modal-card" style="max-width:380px">
+  <div class="modal-card" style="max-width:360px">
     <h3 id="tmod-title">T1 — Dia 1</h3>
-    <p>Registre até 5 medições com horário. A média será calculada automaticamente.</p>
-    <div id="tmod-media" style="margin:10px 0;font-size:.82rem;color:var(--mel);font-weight:600"></div>
+    <p style="margin-bottom:12px">Registre até 5 amostras. A média é calculada automaticamente.</p>
+    <div id="tmod-media" style="margin:10px 0;font-size:.88rem;color:var(--mel);font-weight:600"></div>
+
     <table style="width:100%;border-collapse:collapse;margin-bottom:14px">
       <thead><tr>
-        <th style="padding:6px 4px;font-size:.68rem;color:var(--text2);text-align:center;border-bottom:1px solid var(--border)">#</th>
-        <th style="padding:6px 4px;font-size:.68rem;color:var(--text2);border-bottom:1px solid var(--border)">Horário</th>
-        <th style="padding:6px 4px;font-size:.68rem;color:var(--text2);border-bottom:1px solid var(--border)">Temp (°C)</th>
+        <th style="padding:6px 4px;font-size:.68rem;color:var(--text2);text-align:center;border-bottom:1px solid var(--border);width:28px">#</th>
+        <th style="padding:6px 4px;font-size:.68rem;color:var(--text2);border-bottom:1px solid var(--border)">Temperatura (°C)</th>
       </tr></thead>
       <tbody id="tmod-tbody"></tbody>
     </table>
+
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:7px">
+        Horário da medição
+      </label>
+      <input type="time" id="tmod-horario"
+        style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--r-sm);background:#1a0f06;color:var(--text);font-family:'Inter',sans-serif;font-size:.95rem;">
+    </div>
+
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="fecharModal('tmod-modal')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarPainelT()">✓ Salvar e calcular média</button>
@@ -1108,9 +1208,9 @@ function getLotesKey(){
   return s ? `cacau_lotes_${s.id}` : 'cacau_lotes_anon';
 }
 
-// ──  / SYNC ────────────────────────────────────────────────────
+// ── GAS / SYNC ────────────────────────────────────────────────────
 // ▼▼▼ COLE SUA URL DO APPS SCRIPT AQUI ▼▼▼
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbz8VAVP0u3M5jn1RBR0Gd5lEmA5GMFkjbupgVlH9cNGEWwL6t9E-QzZuLimE40wEVoy0g/exec';
+const GAS_URL = 'COLE_SUA_URL_AQUI';
 // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
 function getGasUrl(){ return GAS_URL.startsWith('https://') ? GAS_URL : ''; }
@@ -1427,60 +1527,73 @@ let tModalT   = null;
 function abrirPainelT(dia, t){
   tModalDia = dia;
   tModalT   = t;
-  const l = loteAtual;
-  const medList = l.fermentacao?.dias?.[dia]?.[`${t}_med`] || [];
-  const tVal    = l.fermentacao?.dias?.[dia]?.[t] || '';
+  const d       = loteAtual.fermentacao?.dias?.[dia] || {};
+  const medList = d[`${t}_med`] || [];
+  const horario = d[`${t}_hora`] || '';
+  const tVal    = d[t] || '';
 
   document.getElementById('tmod-title').textContent = `Dia ${dia} — ${t.toUpperCase()}`;
-  document.getElementById('tmod-media').textContent = tVal ? `Média atual: ${tVal} °C` : 'Sem média ainda';
+  document.getElementById('tmod-media').textContent  = tVal ? `Média atual: ${tVal} °C` : 'Sem média ainda';
+  document.getElementById('tmod-horario').value      = horario;
 
-  // Renderizar linhas de medição
+  // Pré-preenche hora atual se não tiver
+  if(!horario){
+    const agora = new Date();
+    document.getElementById('tmod-horario').value =
+      agora.getHours().toString().padStart(2,'0') + ':' + agora.getMinutes().toString().padStart(2,'0');
+  }
+
   const tbody = document.getElementById('tmod-tbody');
   tbody.innerHTML = '';
   for(let i=0; i<5; i++){
-    const m = medList[i] || {hora:'', temp:''};
+    const temp = medList[i]?.temp ?? '';
     tbody.innerHTML += `<tr>
       <td style="padding:4px 2px;text-align:center;font-size:.75rem;color:var(--text2)">${i+1}ª</td>
-      <td style="padding:4px"><input type="time" class="tmod-hora" value="${m.hora}" style="width:100%;padding:6px;border:1.5px solid var(--border);border-radius:6px;background:#1a0f06;color:var(--text);font-size:.82rem;font-family:'Inter',sans-serif"></td>
-      <td style="padding:4px"><input type="number" step="0.1" class="tmod-temp" placeholder="°C" value="${m.temp}" style="width:100%;padding:6px;border:1.5px solid var(--border);border-radius:6px;background:#1a0f06;color:var(--text);font-size:.82rem;text-align:center;font-family:'Inter',sans-serif"></td>
+      <td style="padding:4px"><input type="number" step="0.1" class="tmod-temp" placeholder="°C" value="${temp}"
+        style="width:100%;padding:8px 6px;border:1.5px solid var(--border);border-radius:6px;background:#1a0f06;color:var(--text);font-size:.9rem;text-align:center;font-family:'Inter',sans-serif"
+        onkeydown="if(event.key==='Enter'){const next=this.closest('tr').nextElementSibling?.querySelector('input');if(next)next.focus();else document.getElementById('tmod-horario').focus();}">
+      </td>
     </tr>`;
   }
   document.getElementById('tmod-modal').classList.add('open');
+  // Foca primeiro campo
+  setTimeout(()=>tbody.querySelector('.tmod-temp')?.focus(), 150);
 }
 
 function salvarPainelT(){
-  const horas = [...document.querySelectorAll('.tmod-hora')].map(i=>i.value);
-  const temps  = [...document.querySelectorAll('.tmod-temp')].map(i=>parseFloat(i.value));
+  const temps   = [...document.querySelectorAll('.tmod-temp')].map(i=>parseFloat(i.value));
+  const horario = document.getElementById('tmod-horario').value;
   const medList = [];
   let soma=0, count=0;
   for(let i=0;i<5;i++){
     if(temps[i] && !isNaN(temps[i])){
-      medList.push({hora:horas[i], temp:temps[i]});
-      soma+=temps[i]; count++;
+      medList.push({ temp: temps[i] });
+      soma += temps[i]; count++;
     } else {
-      medList.push({hora:horas[i]||'', temp:''});
+      medList.push({ temp: '' });
     }
   }
-  const media = count>0 ? (soma/count).toFixed(1) : '';
+  const media = count > 0 ? (soma/count).toFixed(1) : '';
 
-  if(!loteAtual.fermentacao) loteAtual.fermentacao={dias:{}};
-  if(!loteAtual.fermentacao.dias) loteAtual.fermentacao.dias={};
-  if(!loteAtual.fermentacao.dias[tModalDia]) loteAtual.fermentacao.dias[tModalDia]={};
-  loteAtual.fermentacao.dias[tModalDia][tModalT] = media;
+  if(!loteAtual.fermentacao) loteAtual.fermentacao = { dias:{} };
+  if(!loteAtual.fermentacao.dias) loteAtual.fermentacao.dias = {};
+  if(!loteAtual.fermentacao.dias[tModalDia]) loteAtual.fermentacao.dias[tModalDia] = {};
+
+  loteAtual.fermentacao.dias[tModalDia][tModalT]          = media;
   loteAtual.fermentacao.dias[tModalDia][`${tModalT}_med`] = medList;
+  loteAtual.fermentacao.dias[tModalDia][`${tModalT}_hora`]= horario;
 
-  // Persiste imediatamente (não espera o botão "Salvar Fermentação")
   salvarLoteCompleto(loteAtual);
 
-  // Atualiza campo na tabela principal
+  // Atualiza célula na tabela — mostra média e horário
   const el = document.getElementById(`ft${tModalDia}_${tModalT}`);
   if(el){
     el.value = media;
-    el.title = medList.filter(m=>m.temp).map(m=>`${m.hora||'—'}: ${m.temp}°C`).join(' | ');
+    el.title = horario ? `Medido às ${horario} — amostras: ${medList.filter(m=>m.temp).map(m=>m.temp+'°C').join(', ')}` : '';
   }
 
   document.getElementById('tmod-modal').classList.remove('open');
-  toast(`✅ ${tModalT.toUpperCase()} Dia ${tModalDia} — média ${media||'—'} °C`);
+  toast(`✅ ${tModalT.toUpperCase()} Dia ${tModalDia} — média ${media||'—'} °C${horario?' às '+horario:''}`);
 }
 
 function buildFermTable(){
@@ -1730,24 +1843,32 @@ async function executarExclusao(){
   const id = loteParaExcluir;
   loteParaExcluir = null;
 
-  // Registra tombstone — garante que outros dispositivos também apaguem na próxima sync
-  salvarDeletion(id);
+  // Mostra loading no botão
+  const delBtn = document.querySelector('#confirm-modal .btn-confirm-del');
+  if(delBtn){ delBtn.disabled = true; delBtn.textContent = '⏳ Excluindo...'; }
 
-  // Remove localmente — UX imediata
-  lotes = lotes.filter(l => l.id !== id);
-  if(loteAtual?.id === id) loteAtual = null;
-  salvarTudo();
-  fecharModal('confirm-modal');
-  renderLotes();
-  toast('🗑 Lote excluído.');
-
-  // Remove do banco em segundo plano
+  // 1. Remove do banco PRIMEIRO (se configurado)
   if(gasReady()){
     const res = await gasExcluirLoteRemoto(id);
     if(!res.ok){
-      toast('⚠️ Excluído localmente. Erro ao remover do banco: '+(res.err||res.msg||''));
+      if(delBtn){ delBtn.disabled = false; delBtn.textContent = '🗑 Excluir'; }
+      toast('⚠️ Erro ao remover do banco: '+(res.err||res.msg||'falha de conexão'));
+      // Não cancela: remove localmente mesmo assim e registra tombstone
     }
   }
+
+  // 2. Registra tombstone para outros dispositivos apagarem no próximo sync
+  salvarDeletion(id);
+
+  // 3. Remove localmente
+  lotes = lotes.filter(l => l.id !== id);
+  if(loteAtual?.id === id) loteAtual = null;
+  salvarTudo();
+
+  if(delBtn){ delBtn.disabled = false; delBtn.textContent = '🗑 Excluir'; }
+  fecharModal('confirm-modal');
+  renderLotes();
+  toast('🗑 Lote excluído do dispositivo e do banco.');
 }
 
 // ── SHARE / QR ────────────────────────────────────────────────────
@@ -2170,7 +2291,301 @@ function toggleVoz(){
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  IDENTIFICAÇÃO — apenas nome local, sem senha
+//  NOVAS FUNCIONALIDADES: ARQUIVAR · VENDA · BLENDS
+// ═══════════════════════════════════════════════════════════════
+
+// ── AÇÕES POPOVER ─────────────────────────────────────────────────
+function toggleAcoes(){
+  const p = document.getElementById('acoes-popover');
+  p.classList.toggle('open');
+}
+function fecharAcoes(){
+  document.getElementById('acoes-popover')?.classList.remove('open');
+}
+document.addEventListener('click', e=>{
+  const p = document.getElementById('acoes-popover');
+  if(p?.classList.contains('open')
+    && !e.target.closest('#acoes-popover')
+    && !e.target.closest('button[onclick="toggleAcoes()"]'))
+    fecharAcoes();
+});
+
+// ── ARQUIVAR ──────────────────────────────────────────────────────
+async function arquivarLote(){
+  if(!loteAtual) return;
+  fecharAcoes();
+  loteAtual.status = loteAtual.status==='arquivado' ? '' : 'arquivado';
+  await salvarLoteCompleto(loteAtual);
+  renderLotes();
+  showScreen('lotes');
+  toast(loteAtual.status==='arquivado' ? '📦 Lote arquivado.' : '✅ Lote restaurado.');
+}
+
+async function desarquivarLote(id){
+  const l = lotes.find(x=>x.id===id);
+  if(!l) return;
+  delete l.status;
+  await salvarLoteCompleto(l);
+  renderArquivados();
+  toast('✅ Lote restaurado para a lista principal.');
+}
+
+function renderArquivados(){
+  const c = document.getElementById('arquivados-list');
+  if(!c) return;
+  const arq = lotes.filter(l=>l.status==='arquivado');
+  if(!arq.length){
+    c.innerHTML=`<div class="empty"><div class="ei">📦</div><h3>Nenhum lote arquivado</h3><p>Dentro de um lote, toque em "⋯ Ações" → Arquivar.</p></div>`;
+    return;
+  }
+  c.innerHTML = arq.map(l=>`
+    <div class="lote-card">
+      <div class="lote-card-top">
+        <div class="lote-badge">📦</div>
+        <div class="lote-info">
+          <div class="lote-num">${l.numero}</div>
+          <div class="lote-ref">${l.referencia||'—'} · ${formatDate(l.dataQuebra)}</div>
+        </div>
+      </div>
+      <div class="lote-card-actions" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <button class="btn btn-secondary btn-sm" onclick="abrirLote('${l.id}')">Abrir</button>
+        <button class="btn btn-secondary btn-sm" onclick="desarquivarLote('${l.id}')">↩ Restaurar</button>
+        <button class="btn-delete" onclick="confirmarExclusao('${l.id}','${l.numero}')">🗑 Excluir</button>
+      </div>
+    </div>`).join('');
+}
+
+// ── VENDA ─────────────────────────────────────────────────────────
+function abrirModalVenda(){
+  if(!loteAtual) return;
+  fecharAcoes();
+  const l  = loteAtual;
+  const kg = parseFloat(l.secagem?.peso||0);
+  document.getElementById('venda-lote-info').textContent =
+    `${l.numero}${l.referencia?' — '+l.referencia:''} · Peso: ${kg||'—'} kg`;
+  document.getElementById('venda-data').value             = new Date().toISOString().slice(0,10);
+  document.getElementById('venda-valor-arroba').value     = l.venda?.valorArroba||'';
+  atualizarPreviewVenda();
+  document.getElementById('venda-modal').classList.add('open');
+}
+
+document.addEventListener('input', e=>{
+  if(e.target.id==='venda-valor-arroba') atualizarPreviewVenda();
+});
+
+function atualizarPreviewVenda(){
+  const l   = loteAtual; if(!l) return;
+  const val = parseFloat(document.getElementById('venda-valor-arroba')?.value)||0;
+  const kg  = parseFloat(l.secagem?.peso||0);
+  const prev = document.getElementById('venda-preview');
+  if(!prev) return;
+  if(!val||!kg){ prev.style.display='none'; return; }
+  const arrobas = kg/15, sacos30 = kg/30, total = arrobas*val;
+  prev.style.display='block';
+  prev.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><div style="font-size:.65rem;color:var(--text2)">Peso seco</div><strong style="color:var(--areia)">${kg} kg</strong></div>
+      <div><div style="font-size:.65rem;color:var(--text2)">Arrobas (@)</div><strong style="color:var(--areia)">${arrobas.toFixed(2)} @</strong></div>
+      <div><div style="font-size:.65rem;color:var(--text2)">Sacos 30 kg</div><strong style="color:var(--areia)">${sacos30.toFixed(2)} sc</strong></div>
+      <div><div style="font-size:.65rem;color:var(--text2)">Total estimado</div><strong style="color:var(--mel)">R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong></div>
+    </div>`;
+}
+
+async function salvarVenda(){
+  if(!loteAtual) return;
+  const val  = parseFloat(document.getElementById('venda-valor-arroba').value);
+  const data = document.getElementById('venda-data').value;
+  if(!val||val<=0){ toast('⚠️ Informe o valor por arroba'); return; }
+  if(!data){ toast('⚠️ Informe a data da venda'); return; }
+  const kg      = parseFloat(loteAtual.secagem?.peso||0);
+  const arrobas = kg/15;
+  loteAtual.status = 'vendido';
+  loteAtual.venda  = { valorArroba:val, data, kg, arrobas, total:arrobas*val };
+  await salvarLoteCompleto(loteAtual);
+  fecharModal('venda-modal');
+  renderLotes();
+  toast('💰 Venda registrada!');
+}
+
+async function editarVenda(id){
+  loteAtual = lotes.find(l=>l.id===id);
+  if(loteAtual) abrirModalVenda();
+}
+
+function renderVendidos(){
+  const c = document.getElementById('vendidos-list');
+  const r = document.getElementById('vendidos-resumo');
+  if(!c||!r) return;
+  const vend = lotes.filter(l=>l.status==='vendido'&&l.venda);
+  if(!vend.length){
+    c.innerHTML=`<div class="empty"><div class="ei">💰</div><h3>Nenhuma venda registrada</h3><p>Dentro de um lote, toque em "⋯ Ações" → Marcar como vendido.</p></div>`;
+    r.innerHTML=''; return;
+  }
+  const totalKg     = vend.reduce((s,l)=>s+l.venda.kg,0);
+  const totalReais  = vend.reduce((s,l)=>s+l.venda.total,0);
+  const mediaArr    = vend.reduce((s,l)=>s+l.venda.valorArroba,0)/vend.length;
+  const totalArr    = totalKg/15;
+  const totalSacos  = totalKg/30;
+
+  r.innerHTML=`
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px">
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:12px">Resumo de Vendas</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><div style="font-size:.65rem;color:var(--text2)">Total recebido</div><div style="font-size:1.1rem;font-weight:700;color:var(--mel)">R$ ${totalReais.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+        <div><div style="font-size:.65rem;color:var(--text2)">Média por @</div><div style="font-size:1.1rem;font-weight:700;color:var(--areia)">R$ ${mediaArr.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+        <div><div style="font-size:.65rem;color:var(--text2)">Total kg</div><div style="font-weight:600;color:var(--areia)">${totalKg.toFixed(1)} kg</div></div>
+        <div><div style="font-size:.65rem;color:var(--text2)">@ · Sacos 30kg</div><div style="font-weight:600;color:var(--areia)">${totalArr.toFixed(1)} @ · ${totalSacos.toFixed(1)} sc</div></div>
+      </div>
+    </div>`;
+
+  c.innerHTML=vend.map(l=>`
+    <div class="lote-card">
+      <div class="lote-card-top">
+        <div class="lote-badge">💰</div>
+        <div class="lote-info">
+          <div class="lote-num">${l.numero}</div>
+          <div class="lote-ref">${l.referencia||'—'} · ${formatDate(l.venda.data)}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:.82rem;color:var(--mel);font-weight:700">R$ ${l.venda.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+          <div style="font-size:.65rem;color:var(--text2)">R$${l.venda.valorArroba.toLocaleString('pt-BR',{minimumFractionDigits:2})}/@ · ${l.venda.arrobas.toFixed(1)}@</div>
+        </div>
+      </div>
+      <div class="lote-card-actions" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <button class="btn btn-secondary btn-sm" onclick="abrirLote('${l.id}')">Abrir lote</button>
+        <button class="btn btn-secondary btn-sm" onclick="editarVenda('${l.id}')">✏ Editar</button>
+      </div>
+    </div>`).join('');
+}
+
+// ── BLENDS ────────────────────────────────────────────────────────
+let blends = JSON.parse(localStorage.getItem('cacau_blends')||'[]');
+function salvarBlends(){ localStorage.setItem('cacau_blends', JSON.stringify(blends)); }
+
+function mostrarNovoBlend(){
+  document.getElementById('blend-nome').value='';
+  document.getElementById('blend-preview').style.display='none';
+  const disponiveis = lotes.filter(l=>!l.status||l.status==='');
+  const c = document.getElementById('blend-lotes-check');
+  if(!disponiveis.length){
+    c.innerHTML=`<p style="font-size:.8rem;color:var(--text2);padding:8px 0">Nenhum lote ativo disponível.</p>`; }
+  else {
+    c.innerHTML = disponiveis.map(l=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:8px">
+        <input type="checkbox" id="bl_${l.id}" class="blend-chk" data-id="${l.id}"
+          style="width:18px;height:18px;accent-color:var(--ouro);flex-shrink:0"
+          onchange="atualizarPreviewBlend()">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.85rem;font-weight:600;color:var(--areia)">${l.numero}</div>
+          <div style="font-size:.7rem;color:var(--text2)">${l.referencia||'—'} · Disp: ${l.secagem?.peso||'—'} kg</div>
+        </div>
+        <input type="number" step="0.1" min="0" placeholder="kg" id="blkg_${l.id}"
+          style="width:68px;padding:7px;border:1.5px solid var(--border);border-radius:6px;background:#1a0f06;color:var(--text);font-size:.85rem;text-align:center;font-family:'Inter',sans-serif"
+          oninput="atualizarPreviewBlend()">
+      </div>`).join('');
+  }
+  document.getElementById('blend-modal').classList.add('open');
+}
+
+function atualizarPreviewBlend(){
+  const sel = [...document.querySelectorAll('.blend-chk:checked')];
+  const prev = document.getElementById('blend-preview');
+  if(!sel.length){ prev.style.display='none'; return; }
+  let totalKg=0, somaFerm=0, countFerm=0;
+  const itens=[];
+  sel.forEach(chk=>{
+    const l=lotes.find(x=>x.id===chk.dataset.id); if(!l) return;
+    const kg=parseFloat(document.getElementById('blkg_'+l.id)?.value||0);
+    const ft=parseFloat(l.corte?.total||0);
+    totalKg+=kg;
+    if(ft>0&&kg>0){somaFerm+=ft*kg;countFerm+=kg;}
+    itens.push({num:l.numero,kg,ft});
+  });
+  const mf=countFerm>0?(somaFerm/countFerm).toFixed(1):'—';
+  prev.style.display='block';
+  prev.innerHTML=`
+    <div style="font-size:.7rem;font-weight:700;color:var(--mel);margin-bottom:8px">Preview</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px">
+      <div><div style="font-size:.62rem;color:var(--text2)">Total kg</div><strong style="color:var(--areia)">${totalKg.toFixed(1)}</strong></div>
+      <div><div style="font-size:.62rem;color:var(--text2)">Arrobas</div><strong style="color:var(--areia)">${(totalKg/15).toFixed(2)}</strong></div>
+      <div><div style="font-size:.62rem;color:var(--text2)">Sacos 30kg</div><strong style="color:var(--areia)">${(totalKg/30).toFixed(2)}</strong></div>
+      <div><div style="font-size:.62rem;color:var(--text2)">Méd. Ferm.</div><strong style="color:var(--mel)">${mf}%</strong></div>
+    </div>
+    ${itens.map(i=>`<div style="font-size:.7rem;color:var(--text2)">${i.num}: ${i.kg}kg${i.ft?' · '+i.ft+'%':''}</div>`).join('')}`;
+}
+
+async function salvarBlend(){
+  const nome=document.getElementById('blend-nome').value.trim();
+  if(!nome){ toast('⚠️ Dê um nome ao blend'); return; }
+  const sel=[...document.querySelectorAll('.blend-chk:checked')];
+  if(!sel.length){ toast('⚠️ Selecione pelo menos 1 lote'); return; }
+  let totalKg=0,somaFerm=0,countFerm=0;
+  const itens=[];
+  sel.forEach(chk=>{
+    const l=lotes.find(x=>x.id===chk.dataset.id); if(!l) return;
+    const kg=parseFloat(document.getElementById('blkg_'+l.id)?.value||0);
+    const ft=parseFloat(l.corte?.total||0);
+    totalKg+=kg;
+    if(ft>0&&kg>0){somaFerm+=ft*kg;countFerm+=kg;}
+    itens.push({loteId:l.id,loteNum:l.numero,kg,fermTotal:ft});
+  });
+  const blend={
+    id:'B'+Date.now(), nome, criadoEm:new Date().toISOString(),
+    itens, totalKg, arrobas:totalKg/15, sacos30:totalKg/30,
+    mediaFerm:countFerm>0?(somaFerm/countFerm).toFixed(1):'—'
+  };
+  blends.push(blend);
+  salvarBlends();
+  // Envia ao GAS
+  const url=getGasUrl();
+  if(url) fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({acao:'upsertBlend',blend})}).catch(()=>{});
+  fecharModal('blend-modal');
+  renderBlends();
+  toast('✅ Blend criado!');
+}
+
+function excluirBlend(id){
+  if(!confirm('Excluir este blend?')) return;
+  blends=blends.filter(b=>b.id!==id);
+  salvarBlends();
+  renderBlends();
+  toast('🗑 Blend excluído.');
+}
+
+function renderBlends(){
+  const c=document.getElementById('blends-list');
+  if(!c) return;
+  if(!blends.length){
+    c.innerHTML=`<div class="empty"><div class="ei">🧪</div><h3>Nenhum blend criado</h3><p>Combine lotes para calcular médias de fermentação e totais de peso.</p></div>`;
+    return;
+  }
+  c.innerHTML=blends.map(b=>`
+    <div class="lote-card">
+      <div class="lote-card-top">
+        <div class="lote-badge">🧪</div>
+        <div class="lote-info">
+          <div class="lote-num">${b.nome}</div>
+          <div class="lote-ref">${new Date(b.criadoEm).toLocaleDateString('pt-BR')} · ${b.itens.length} lote(s)</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;padding:10px;background:#1a0f06;border-radius:8px;text-align:center">
+        <div><div style="font-size:.6rem;color:var(--text2)">Total</div><div style="font-size:.88rem;font-weight:700;color:var(--areia)">${b.totalKg.toFixed(1)} kg</div></div>
+        <div><div style="font-size:.6rem;color:var(--text2)">@</div><div style="font-size:.88rem;font-weight:700;color:var(--areia)">${b.arrobas.toFixed(1)} @</div></div>
+        <div><div style="font-size:.6rem;color:var(--text2)">Sacos 30kg</div><div style="font-size:.88rem;font-weight:700;color:var(--areia)">${b.sacos30.toFixed(1)} sc</div></div>
+        <div><div style="font-size:.6rem;color:var(--text2)">Méd. Ferm.</div><div style="font-size:.88rem;font-weight:700;color:var(--mel)">${b.mediaFerm}%</div></div>
+      </div>
+      <div style="margin-top:8px;font-size:.7rem;color:var(--text2);line-height:1.6">
+        ${b.itens.map(i=>`${i.loteNum}: ${i.kg} kg${i.fermTotal?' · '+i.fermTotal+'%':''}`).join(' | ')}
+      </div>
+      <div class="lote-card-actions" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <button class="btn-delete" onclick="excluirBlend('${b.id}')">🗑 Excluir blend</button>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════
 
 let sessaoAtual = null;
