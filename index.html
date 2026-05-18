@@ -1106,7 +1106,7 @@ function getLotesKey(){
 
 // ── GAS / SYNC ────────────────────────────────────────────────────
 // ▼▼▼ COLE SUA URL DO APPS SCRIPT AQUI ▼▼▼
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbx2QqHHGIgWv8rmg3ulnZi5EPcxMssCk0VYyY-4xNW6E-t4Rs0YZMWOlGpsFfVNcyIl/exec';
+const GAS_URL = 'COLE_SUA_URL_AQUI';
 // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
 function getGasUrl(){ return GAS_URL.startsWith('https://') ? GAS_URL : ''; }
@@ -1114,38 +1114,41 @@ function gasReady(){ return !!getGasUrl(); }
 
 async function gasCarregarLotes(){
   const url = getGasUrl(); if(!url) return null;
-  const s = getSessao();   if(!s)  return null;
   try{
-    const r = await fetch(`${url}?acao=lerLotes&userId=${encodeURIComponent(s.id)}&token=${encodeURIComponent(s.token)}`);
-    if(!r.ok) return null;
+    const r = await fetch(`${url}?acao=lerLotes`, { cache:'no-store' });
+    if(!r.ok){ console.warn('GAS lerLotes HTTP',r.status); return null; }
     const txt = await r.text();
     const d = JSON.parse(txt);
-    return (d.ok && Array.isArray(d.lotes)) ? d.lotes : null;
-  }catch(e){ return null; }
+    if(!d.ok){ console.warn('GAS lerLotes erro:', d.msg); return null; }
+    return Array.isArray(d.lotes) ? d.lotes : null;
+  }catch(e){ console.warn('GAS lerLotes falhou:', e.message); return null; }
 }
 
 async function gasSalvarLote(lote){
-  const url = getGasUrl(); if(!url) return;
-  const s = getSessao();
+  const url = getGasUrl(); if(!url) return { ok:false };
   try{
-    await fetch(url, {
+    const r = await fetch(url, {
       method:'POST',
       headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify({acao:'upsertLote', lote, userId:s?.id||'', token:s?.token||''})
+      body: JSON.stringify({ acao:'upsertLote', lote })
     });
-  }catch(e){}
+    if(!r.ok) return { ok:false, status:r.status };
+    return { ok:true };
+  }catch(e){ return { ok:false, err:e.message }; }
 }
 
 async function gasExcluirLoteRemoto(id){
-  const url = getGasUrl(); if(!url) return;
-  const s = getSessao();
+  const url = getGasUrl(); if(!url) return { ok:false };
   try{
-    await fetch(url, {
+    const r = await fetch(url, {
       method:'POST',
       headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify({acao:'excluirLote', id, userId:s?.id||'', token:s?.token||''})
+      body: JSON.stringify({ acao:'excluirLote', id })
     });
-  }catch(e){}
+    const txt = await r.text();
+    const d = JSON.parse(txt);
+    return d;
+  }catch(e){ return { ok:false, err:e.message }; }
 }
 
 async function gasAuth(payload){
@@ -1172,7 +1175,15 @@ function salvarTudo(){
   localStorage.setItem('cacau_lotes', JSON.stringify(lotes));
 }
 
-async function salvarLoteCompleto(lote){ salvarTudo(); await gasSalvarLote(lote); }
+async function salvarLoteCompleto(lote){
+  salvarTudo(); // salva local imediatamente
+  if(gasReady()){
+    const res = await gasSalvarLote(lote);
+    if(!res.ok){
+      toast('⚠️ Salvo localmente. Erro ao sincronizar com o banco.');
+    }
+  }
+}
 
 // ── CONFIG ────────────────────────────────────────────────────────
 function salvarConfig(){
@@ -1693,15 +1704,23 @@ function confirmarExclusao(id,num){
 async function executarExclusao(){
   if(!loteParaExcluir) return;
   const id = loteParaExcluir;
-  loteParaExcluir = null; // reseta antes para evitar dupla exclusão
-  await gasExcluirLoteRemoto(id);
+  loteParaExcluir = null;
+
+  // Remove localmente primeiro — UX imediata
   lotes = lotes.filter(l=>l.id!==id);
-  // Se o lote excluído era o atual, limpa
   if(loteAtual?.id === id) loteAtual = null;
   salvarTudo();
   fecharModal('confirm-modal');
   renderLotes();
   toast('🗑 Lote excluído.');
+
+  // Agora tenta remover do banco (sem bloquear a UI)
+  if(gasReady()){
+    const res = await gasExcluirLoteRemoto(id);
+    if(!res.ok){
+      toast('⚠️ Excluído localmente. Erro ao remover do banco: '+(res.err||res.msg||''));
+    }
+  }
 }
 
 // ── SHARE / QR ────────────────────────────────────────────────────
@@ -1966,28 +1985,28 @@ function mostrarSyncStatus(msg){
 function ocultarSyncStatus(){ document.getElementById('sync-bar').style.display='none'; }
 
 async function sincronizarAgora(){
-  if(!gasReady()){
-    // Sem GAS configurado — funciona offline, sem mensagem de erro
-    return;
-  }
+  if(!gasReady()) return;
   const btn = document.getElementById('sync-btn');
   btn.classList.add('spinning');
   mostrarSyncStatus('🔄 Sincronizando...');
+
   const remoto = await gasCarregarLotes();
+
   if(remoto !== null){
+    // Merge: remoto tem prioridade (dados mais recentes do servidor)
     const map = {};
     lotes.forEach(l => map[l.id] = l);
     remoto.forEach(l => { map[l.id] = l; });
     lotes = Object.values(map);
     salvarTudo();
     renderLotes();
-    mostrarSyncStatus('✅ Sincronizado!');
+    mostrarSyncStatus('✅ Sincronizado — '+lotes.length+' lote(s)');
   } else {
-    // Falha silenciosa — não atrapalha o uso offline
-    ocultarSyncStatus();
+    mostrarSyncStatus('⚠️ Erro de conexão com o banco de dados');
   }
+
   btn.classList.remove('spinning');
-  setTimeout(()=>ocultarSyncStatus(), 2500);
+  setTimeout(()=>ocultarSyncStatus(), 3500);
 }
 
 async function testarConexao(){
@@ -2256,13 +2275,12 @@ document.addEventListener('DOMContentLoaded', async ()=>{
         lotes = Object.values(map);
         salvarTudo();
         renderLotes();
-        mostrarSyncStatus('✅ Sincronizado!');
+        mostrarSyncStatus('✅ Sincronizado — '+lotes.length+' lote(s)');
       } else {
-        // Falha silenciosa — não mostra erro, apenas oculta a barra
-        ocultarSyncStatus();
+        mostrarSyncStatus('⚠️ Erro de conexão com o banco de dados');
       }
       document.getElementById('sync-btn').classList.remove('spinning');
-      setTimeout(()=>ocultarSyncStatus(), 2500);
+      setTimeout(()=>ocultarSyncStatus(), 3500);
     }
   } else {
     // Sem nome → mostrar tela de identificação
